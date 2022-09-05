@@ -26,7 +26,7 @@
         android:id="@+id/checkbox"
         android:layout_width="48dp"
         android:layout_height="64dp"
-        android:buttonTint="?attr/colorAccent"
+        android:buttonTint="?attr/colorPrimaryDark"
         android:focusable="true"
         android:gravity="center"
         android:nextFocusRight="@id/root"

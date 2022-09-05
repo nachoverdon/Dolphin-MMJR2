@@ -5,7 +5,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+	android:background="@color/dolphin_background">
 
     <TextView
         android:id="@+id/text_sd_root"
@@ -51,8 +52,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/spacing_large"
-        android:background="?attr/colorPrimaryDark"
-        android:backgroundTint="?attr/colorPrimaryDark"
+		android:backgroundTint="?attr/colorPrimaryDark"
         android:text="@string/riivolution_start"
         android:textColor="@color/button_text_color"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -4,14 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+	android:background="@color/dolphin_background">
 
     <Button
         android:id="@+id/button_delete"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/spacing_large"
-        android:background="?attr/colorPrimaryDark"
         android:backgroundTint="?attr/colorPrimaryDark"
         android:text="@string/cheats_delete"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -24,7 +24,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/spacing_large"
-        android:background="?attr/colorPrimaryDark"
         android:backgroundTint="?attr/colorPrimaryDark"
         android:text="@string/cheats_edit"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -37,7 +36,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/spacing_large"
-        android:background="?attr/colorPrimaryDark"
         android:backgroundTint="?attr/colorPrimaryDark"
         android:text="@string/cancel"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -50,7 +48,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/spacing_large"
-        android:background="?attr/colorPrimaryDark"
         android:backgroundTint="?attr/colorPrimaryDark"
         android:text="@string/ok"
         app:layout_constraintBottom_toBottomOf="parent"
