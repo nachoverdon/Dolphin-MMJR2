@@ -26,7 +26,9 @@ import org.dolphinemu.dolphinemu.features.settings.model.WiimoteProfileStringSet
 import org.dolphinemu.dolphinemu.features.settings.model.view.CheckBoxSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.FilePicker;
 import org.dolphinemu.dolphinemu.features.settings.model.view.HeaderSetting;
+import org.dolphinemu.dolphinemu.features.settings.model.view.HyperLinkHeaderSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.InputBindingSetting;
+import org.dolphinemu.dolphinemu.features.settings.model.view.InputStringSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.IntSliderSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.InvertedCheckBoxSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.LogCheckBoxSetting;
@@ -41,7 +43,10 @@ import org.dolphinemu.dolphinemu.features.settings.model.view.SubmenuSetting;
 import org.dolphinemu.dolphinemu.features.settings.utils.SettingsFile;
 import org.dolphinemu.dolphinemu.model.AppTheme;
 import org.dolphinemu.dolphinemu.ui.main.MainPresenter;
+import org.dolphinemu.dolphinemu.utils.BooleanSupplier;
 import org.dolphinemu.dolphinemu.utils.EGLHelper;
+import org.dolphinemu.dolphinemu.utils.ThreadUtil;
+import org.dolphinemu.dolphinemu.utils.WiiUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,12 +62,14 @@ public final class SettingsFragmentPresenter
           NativeLibrary.GetLogTypeNames();
 
   public static final String ARG_CONTROLLER_TYPE = "controller_type";
+  public static final String ARG_SERIALPORT1_TYPE = "serialport1_type";
   private MenuTag mMenuTag;
   private String mGameID;
 
   private Settings mSettings;
   private ArrayList<SettingsItem> mSettingsList;
 
+  private int mSerialPort1Type;
   private int mControllerNumber;
   private int mControllerType;
 
@@ -85,6 +92,10 @@ public final class SettingsFragmentPresenter
     else if (menuTag.isWiimoteMenu())
     {
       mControllerNumber = menuTag.getSubType();
+    }
+    else if (menuTag.isSerialPort1Menu())
+    {
+      mSerialPort1Type = extras.getInt(ARG_SERIALPORT1_TYPE);
     }
   }
 
@@ -171,6 +182,10 @@ public final class SettingsFragmentPresenter
         addGraphicsSettings(sl);
         break;
 
+      case CONFIG_SERIALPORT1:
+        addSerialPortSubSettings(sl, mSerialPort1Type);
+        break;
+
       case GCPAD_TYPE:
         addGcPadSettings(sl);
         break;
@@ -190,7 +205,7 @@ public final class SettingsFragmentPresenter
       case HACKS:
         addHackSettings(sl);
         break;
-		
+
       case ADVANCED_GRAPHICS:
         addAdvancedGraphicsSettings(sl);
         break;
@@ -268,7 +283,7 @@ public final class SettingsFragmentPresenter
     sl.add(new HeaderSetting(mContext, R.string.advanced_submenu2, 0));
     sl.add(new CheckBoxSetting(mContext, BooleanSetting.MAIN_CPU_THREAD, R.string.dual_core,
             R.string.dual_core_description));
-			
+
     sl.add(new CheckBoxSetting(mContext, BooleanSetting.MAIN_OVERRIDE_REGION_SETTINGS,
             R.string.override_region_settings, 0));
     sl.add(new CheckBoxSetting(mContext, BooleanSetting.MAIN_AUTO_DISC_CHANGE,
@@ -422,8 +437,6 @@ public final class SettingsFragmentPresenter
             MainPresenter.REQUEST_DIRECTORY, "/Load"));
     sl.add(new FilePicker(mContext, StringSetting.MAIN_RESOURCEPACK_PATH,
             R.string.resource_pack_path, 0, MainPresenter.REQUEST_DIRECTORY, "/ResourcePacks"));
-    sl.add(new FilePicker(mContext, StringSetting.MAIN_SD_PATH, R.string.SD_card_path, 0,
-            MainPresenter.REQUEST_SD_FILE, "/Wii/sd.raw"));
     sl.add(new FilePicker(mContext, StringSetting.MAIN_WFS_PATH, R.string.wfs_path, 0,
             MainPresenter.REQUEST_DIRECTORY, "/WFS"));
   }
@@ -438,10 +451,15 @@ public final class SettingsFragmentPresenter
             R.array.slotDeviceEntries, R.array.slotDeviceValues));
     sl.add(new SingleChoiceSetting(mContext, IntSetting.MAIN_SLOT_B, R.string.slot_b_device, 0,
             R.array.slotDeviceEntries, R.array.slotDeviceValues));
+    sl.add(new SingleChoiceSetting(mContext, IntSetting.MAIN_SERIAL_PORT_1,
+            R.string.serial_port_1_device, 0,
+            R.array.serialPort1DeviceEntries, R.array.serialPort1DeviceValues,
+            MenuTag.CONFIG_SERIALPORT1));
   }
 
   private void addWiiSettings(ArrayList<SettingsItem> sl)
   {
+	sl.add(new HeaderSetting(mContext, R.string.wii_misc_settings, 0));
     sl.add(new SingleChoiceSetting(mContext, IntSetting.SYSCONF_LANGUAGE, R.string.system_language,
             0, R.array.wiiSystemLanguageEntries, R.array.wiiSystemLanguageValues));
     sl.add(new CheckBoxSetting(mContext, BooleanSetting.SYSCONF_WIDESCREEN, R.string.wii_widescreen,
@@ -452,10 +470,27 @@ public final class SettingsFragmentPresenter
             R.string.wii_screensaver, R.string.wii_screensaver_description));
     sl.add(new SingleChoiceSetting(mContext, IntSetting.SYSCONF_SOUND_MODE, R.string.sound_mode, 0,
             R.array.soundModeEntries, R.array.soundModeValues));
-    sl.add(new CheckBoxSetting(mContext, BooleanSetting.MAIN_WII_SD_CARD, R.string.insert_sd_card,
+    sl.add(new HeaderSetting(mContext, R.string.wii_sd_card_settings, 0));
+	sl.add(new CheckBoxSetting(mContext, BooleanSetting.MAIN_WII_SD_CARD, R.string.insert_sd_card,
             R.string.insert_sd_card_description));
     sl.add(new CheckBoxSetting(mContext, BooleanSetting.MAIN_ALLOW_SD_WRITES,
             R.string.wii_sd_card_allow_writes, 0));
+    sl.add(new CheckBoxSetting(mContext, BooleanSetting.MAIN_WII_SD_CARD_ENABLE_FOLDER_SYNC,
+            R.string.wii_sd_card_sync, R.string.wii_sd_card_sync_description));
+    // TODO: Hardcoding "Load" here is wrong, because the user may have changed the Load path.
+    // The code structure makes this hard to fix, and with scoped storage active the Load path
+    // can't be changed anyway
+    sl.add(new FilePicker(mContext, StringSetting.MAIN_WII_SD_CARD_IMAGE_PATH,
+            R.string.wii_sd_card_path, 0, MainPresenter.REQUEST_SD_FILE, "/Load/WiiSD.raw"));
+    sl.add(new FilePicker(mContext, StringSetting.MAIN_WII_SD_CARD_SYNC_FOLDER_PATH,
+            R.string.wii_sd_sync_folder, 0, MainPresenter.REQUEST_DIRECTORY, "/Load/WiiSDSync/"));
+    sl.add(new RunRunnable(mContext, R.string.wii_sd_card_folder_to_file, 0,
+            R.string.wii_sd_card_folder_to_file_confirmation, 0,
+            () -> convertOnThread(WiiUtils::syncSdFolderToSdImage)));
+    sl.add(new RunRunnable(mContext, R.string.wii_sd_card_file_to_folder, 0,
+            R.string.wii_sd_card_file_to_folder_confirmation, 0,
+            () -> convertOnThread(WiiUtils::syncSdImageToSdFolder)));
+	sl.add(new HeaderSetting(mContext, R.string.wii_wiimote_settings, 0));
     sl.add(new CheckBoxSetting(mContext, BooleanSetting.SYSCONF_WIIMOTE_MOTOR,
             R.string.wiimote_rumble, 0));
     sl.add(new IntSliderSetting(mContext, IntSetting.SYSCONF_SPEAKER_VOLUME,
@@ -573,6 +608,21 @@ public final class SettingsFragmentPresenter
             R.string.overclock_title_description, 0, 400, "%"));
     sl.add(new CheckBoxSetting(mContext, BooleanSetting.MAIN_FAST_DISC_SPEED, R.string.fast_disc_speed,
             R.string.fast_disc_speed_description));
+  }
+
+  private void addSerialPortSubSettings(ArrayList<SettingsItem> sl, int serialPort1Type)
+  {
+    if (serialPort1Type == 10) // Broadband Adapter (XLink Kai)
+    {
+      sl.add(new HyperLinkHeaderSetting(mContext, R.string.xlink_kai_guide_header, 0));
+      sl.add(new InputStringSetting(mContext, StringSetting.MAIN_BBA_XLINK_IP,
+              R.string.xlink_kai_bba_ip, R.string.xlink_kai_bba_ip_description));
+    }
+    else if (serialPort1Type == 12) // Broadband Adapter (Built In)
+    {
+      sl.add(new InputStringSetting(mContext, StringSetting.MAIN_BBA_BUILTIN_DNS,
+              R.string.bba_builtin_dns, R.string.bba_builtin_dns_description));
+    }
   }
 
   private void addGcPadSettings(ArrayList<SettingsItem> sl)
@@ -1375,5 +1425,12 @@ public final class SettingsFragmentPresenter
     }
 
     mView.getAdapter().notifyAllSettingsChanged();
+  }
+
+  private void convertOnThread(BooleanSupplier f)
+  {
+    ThreadUtil.runOnThreadAndShowResult(mView.getActivity(), R.string.wii_converting, 0, () ->
+            mContext.getResources().getString(
+                    f.get() ? R.string.wii_convert_success : R.string.wii_convert_failure));
   }
 }

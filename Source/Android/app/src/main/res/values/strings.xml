@@ -139,7 +139,11 @@
     <string name="skip_ipl_description">Skip BIOS</string>
     <string name="slot_a_device">GameCube Slot A Device</string>
     <string name="slot_b_device">GameCube Slot B Device</string>
+	<string name="serial_port_1_device">GameCube Serial Port 1 Device</string>
     <string name="wii_submenu">Wii</string>
+    <string name="wii_misc_settings">Misc Settings</string>
+    <string name="wii_sd_card_settings">SD Card Settings</string>
+    <string name="wii_wiimote_settings">Wii Remote Settings</string>
     <string name="wii_widescreen">Widescreen</string>
     <string name="wii_widescreen_description">Changes aspect ratio from 4:3 to 16:9 in games that support it.</string>
     <string name="wii_pal60">Use PAL60 Mode (EuRGB60)</string>
@@ -150,6 +154,17 @@
     <string name="insert_sd_card">Insert SD Card</string>
     <string name="insert_sd_card_description">Supports SD and SDHC. Default size is 128 MB.</string>
     <string name="wii_sd_card_allow_writes">Allow Writes to SD Card</string>
+    <string name="wii_sd_card_sync">Automatically Sync with Folder</string>
+    <string name="wii_sd_card_sync_description">Synchronizes the SD Card with the SD Sync Folder when starting and ending emulation.</string>
+    <string name="wii_sd_card_path">SD Card Path</string>
+    <string name="wii_sd_sync_folder">SD Sync Folder</string>
+    <string name="wii_sd_card_folder_to_file">Convert Folder to File Now</string>
+    <string name="wii_sd_card_folder_to_file_confirmation">You are about to convert the content of the SD sync folder into the SD card file. All current content of the file will be deleted. Are you sure you want to continue?</string>
+    <string name="wii_sd_card_file_to_folder">Convert File to Folder Now</string>
+    <string name="wii_sd_card_file_to_folder_confirmation">You are about to convert the content of the SD card file into the SD sync folder. All current content of the folder will be deleted. Are you sure you want to continue?</string>
+    <string name="wii_converting">Converting...</string>
+    <string name="wii_convert_success">Conversion done.</string>
+    <string name="wii_convert_failure">Conversion failed.</string>
     <string name="wiimote_rumble">Wii Remote Rumble</string>
     <string name="wiimote_volume">Wii Remote Speaker Volume</string>
     <string name="sensor_bar_sensitivity">Sensor Bar Sensitivity</string>
@@ -169,6 +184,14 @@
     <string name="analytics_new_id_confirmation">Are you sure you want to generate a new statistics identity?</string>
     <string name="gametdb_thanks">Special thanks to Weihuoya + Dolphin Team for getting this emulator to where it is today.</string>
     <string name="dev_thanks">Dolphin |MMJR2| made by bankaimaster999 and sspacelynx.</string>
+
+    <!-- SerialPort1 Subsetting Fragment -->
+    <string name="serialport1_submenu">Serial Port 1</string>
+    <string name="xlink_kai_guide_header">For setup instructions, <a href="https://www.teamxlink.co.uk/wiki/Dolphin">refer to this page.</a></string>
+    <string name="xlink_kai_bba_ip">XLink Kai IP Address/hostname</string>
+    <string name="xlink_kai_bba_ip_description">IP address or hostname of device running the XLink Kai client</string>
+    <string name="bba_builtin_dns">DNS Server</string>
+    <string name="bba_builtin_dns_description">Use 8.8.8.8 for normal DNS, else enter your custom one</string>
 
     <!-- Interface Preference Fragment -->
     <string name="interface_submenu">Interface</string>

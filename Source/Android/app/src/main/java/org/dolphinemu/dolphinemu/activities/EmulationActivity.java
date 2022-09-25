@@ -194,25 +194,37 @@ public final class EmulationActivity extends AppCompatActivity
   private static void performLaunchChecks(FragmentActivity activity,
           ContinueLaunchCallback continueCallback)
   {
-    if (FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_DEFAULT_ISO) &&
-            FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_FS_PATH) &&
-            FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_DUMP_PATH) &&
-            FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_LOAD_PATH) &&
-            FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_RESOURCEPACK_PATH) &&
-            FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_SD_PATH))
+      if (!FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_DEFAULT_ISO) ||
+              !FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_FS_PATH) ||
+              !FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_DUMP_PATH) ||
+              !FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_LOAD_PATH) ||
+              !FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_RESOURCEPACK_PATH))
     {
       continueCallback.run();
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setMessage(R.string.unavailable_paths);
+        builder.setPositiveButton(R.string.yes, (dialogInterface, i) ->
+                SettingsActivity.launch(activity, MenuTag.CONFIG_PATHS));
+        builder.setNeutralButton(R.string.continue_anyway, (dialogInterface, i) ->
+                continueCallback.run());
+        builder.show();
     }
-    else
+      else if (!FileBrowserHelper.isPathEmptyOrValid(StringSetting.MAIN_WII_SD_CARD_IMAGE_PATH) ||
+              !FileBrowserHelper.isPathEmptyOrValid(
+                      StringSetting.MAIN_WII_SD_CARD_SYNC_FOLDER_PATH))
     {
       AlertDialog.Builder builder = new AlertDialog.Builder(activity, R.style.DolphinDialogBase);
       builder.setMessage(R.string.unavailable_paths);
       builder.setPositiveButton(R.string.yes, (dialogInterface, i) ->
-              SettingsActivity.launch(activity, MenuTag.CONFIG_PATHS));
+              SettingsActivity.launch(activity, MenuTag.CONFIG_WII));
       builder.setNeutralButton(R.string.continue_anyway, (dialogInterface, i) ->
               continueCallback.run());
       builder.show();
     }
+      else
+      {
+        continueCallback.run();
+      }
   }
 
 
