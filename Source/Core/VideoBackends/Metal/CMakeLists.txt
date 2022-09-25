@@ -32,6 +32,7 @@ PUBLIC
   videocommon
 PRIVATE
   spirv_cross
+  ${FOUNDATION_LIBRARY}
   ${METAL_LIBRARY}
   ${QUARTZCORE_LIBRARY}
 )
