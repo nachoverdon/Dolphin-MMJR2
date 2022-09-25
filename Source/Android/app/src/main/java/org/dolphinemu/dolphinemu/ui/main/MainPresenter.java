@@ -27,7 +27,6 @@ import org.dolphinemu.dolphinemu.utils.AfterDirectoryInitializationRunner;
 import org.dolphinemu.dolphinemu.utils.BooleanSupplier;
 import org.dolphinemu.dolphinemu.utils.CompletableFuture;
 import org.dolphinemu.dolphinemu.utils.ContentHandler;
-import org.dolphinemu.dolphinemu.utils.DirectoryInitialization;
 import org.dolphinemu.dolphinemu.utils.FileBrowserHelper;
 import org.dolphinemu.dolphinemu.utils.WiiUtils;
 
@@ -77,7 +76,8 @@ public final class MainPresenter
 
   public void onFabClick()
   {
-    mView.launchFileListActivity();
+    new AfterDirectoryInitializationRunner().runWithLifecycle(mActivity, true,
+            mView::launchFileListActivity);
   }
 
   public boolean handleOptionSelection(int itemId, ComponentActivity activity)

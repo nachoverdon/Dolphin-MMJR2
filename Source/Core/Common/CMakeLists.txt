@@ -31,6 +31,8 @@ add_library(common
   Crypto/bn.h
   Crypto/ec.cpp
   Crypto/ec.h
+  Crypto/SHA1.cpp
+  Crypto/SHA1.h
   Debug/MemoryPatches.cpp
   Debug/MemoryPatches.h
   Debug/Threads.h
@@ -133,6 +135,12 @@ add_library(common
   WindowSystemInfo.h
   WorkQueueThread.h
 )
+
+if(NOT MSVC AND _M_ARM_64)
+  set_source_files_properties(
+    Crypto/AES.cpp
+    PROPERTIES COMPILE_FLAGS "-march=armv8-a+crypto")
+endif()
 
 target_link_libraries(common
 PUBLIC

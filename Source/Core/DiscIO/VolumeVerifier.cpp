@@ -13,14 +13,15 @@
 #include <unordered_set>
 
 #include <mbedtls/md5.h>
-#include <mbedtls/sha1.h>
 #include <mz_compat.h>
 #include <pugixml.hpp>
 
 #include "Common/Align.h"
 #include "Common/Assert.h"
+#include "Common/CPUDetect.h"
 #include "Common/CommonPaths.h"
 #include "Common/CommonTypes.h"
+#include "Common/Crypto/SHA1.h"
 #include "Common/FileUtil.h"
 #include "Common/Hash.h"
 #include "Common/HttpRequest.h"
@@ -372,6 +373,24 @@ VolumeVerifier::VolumeVerifier(const Volume& volume, bool redump_verification,
 VolumeVerifier::~VolumeVerifier()
 {
   WaitForAsyncOperations();
+}
+
+Hashes<bool> VolumeVerifier::GetDefaultHashesToCalculate()
+{
+  Hashes<bool> hashes_to_calculate{.crc32 = true, .md5 = true, .sha1 = true};
+  // If the system can compute certain hashes faster than others, only default-enable the fast ones.
+  const bool sha1_hw_accel = Common::SHA1::CreateContext()->HwAccelerated();
+  // For crc32, we assume zlib-ng will be fast if cpu supports crc32
+  const bool crc32_hw_accel = cpu_info.bCRC32;
+  if (crc32_hw_accel || sha1_hw_accel)
+  {
+    hashes_to_calculate.crc32 = crc32_hw_accel;
+    // md5 has no accelerated implementation at the moment, always default to off
+    hashes_to_calculate.md5 = false;
+    // Always enable SHA1, to avoid situation where only crc32 is computed
+    hashes_to_calculate.sha1 = true;
+  }
+  return hashes_to_calculate;
 }
 
 void VolumeVerifier::Start()
@@ -1053,8 +1072,7 @@ void VolumeVerifier::SetUpHashing()
 
   if (m_hashes_to_calculate.sha1)
   {
-    mbedtls_sha1_init(&m_sha1_context);
-    mbedtls_sha1_starts_ret(&m_sha1_context);
+    m_sha1_context = Common::SHA1::CreateContext();
   }
 }
 
@@ -1176,8 +1194,8 @@ void VolumeVerifier::Process()
     if (m_hashes_to_calculate.crc32)
     {
       m_crc32_future = std::async(std::launch::async, [this, byte_increment] {
-        m_crc32_context =
-            Common::UpdateCRC32(m_crc32_context, m_data.data(), static_cast<u32>(byte_increment));
+        m_crc32_context = Common::UpdateCRC32(m_crc32_context, m_data.data(),
+                                              static_cast<size_t>(byte_increment));
       });
     }
 
@@ -1191,7 +1209,7 @@ void VolumeVerifier::Process()
     if (m_hashes_to_calculate.sha1)
     {
       m_sha1_future = std::async(std::launch::async, [this, byte_increment] {
-        mbedtls_sha1_update_ret(&m_sha1_context, m_data.data(), byte_increment);
+        m_sha1_context->Update(m_data.data(), byte_increment);
       });
     }
   }
@@ -1283,8 +1301,8 @@ void VolumeVerifier::Finish()
 
     if (m_hashes_to_calculate.sha1)
     {
-      m_result.hashes.sha1 = std::vector<u8>(20);
-      mbedtls_sha1_finish_ret(&m_sha1_context, m_result.hashes.sha1.data());
+      const auto digest = m_sha1_context->Finish();
+      m_result.hashes.sha1 = std::vector<u8>(digest.begin(), digest.end());
     }
   }
 
