@@ -442,6 +442,7 @@
     <ClInclude Include="DiscIO\LaggedFibonacciGenerator.h" />
     <ClInclude Include="DiscIO\MultithreadedCompressor.h" />
     <ClInclude Include="DiscIO\NANDImporter.h" />
+    <ClInclude Include="DiscIO\NFSBlob.h" />
     <ClInclude Include="DiscIO\RiivolutionParser.h" />
     <ClInclude Include="DiscIO\RiivolutionPatcher.h" />
     <ClInclude Include="DiscIO\ScrubbedBlob.h" />
@@ -723,7 +724,12 @@
     <ClCompile Include="Common\Crypto\AES.cpp" />
     <ClCompile Include="Common\Crypto\bn.cpp" />
     <ClCompile Include="Common\Crypto\ec.cpp" />
-    <ClCompile Include="Common\Crypto\SHA1.cpp" />
+    <ClCompile Include="Common\Crypto\SHA1.cpp">
+      <!--Workaround msvc arm64 optimizer bug
+      TODO remove after updating to VS 17.4
+      -->
+      <AdditionalOptions Condition="'$(Platform)'=='ARM64'">/d2ssa-peeps-post-color- %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="Common\Debug\MemoryPatches.cpp" />
     <ClCompile Include="Common\Debug\Watches.cpp" />
     <ClCompile Include="Common\DynamicLibrary.cpp" />
@@ -1056,6 +1062,7 @@
     <ClCompile Include="DiscIO\GameModDescriptor.cpp" />
     <ClCompile Include="DiscIO\LaggedFibonacciGenerator.cpp" />
     <ClCompile Include="DiscIO\NANDImporter.cpp" />
+    <ClCompile Include="DiscIO\NFSBlob.cpp" />
     <ClCompile Include="DiscIO\RiivolutionParser.cpp" />
     <ClCompile Include="DiscIO\RiivolutionPatcher.cpp" />
     <ClCompile Include="DiscIO\ScrubbedBlob.cpp" />

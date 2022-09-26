@@ -74,7 +74,7 @@ static std::recursive_mutex g_save_thread_mutex;
 static std::thread g_save_thread;
 
 // Don't forget to increase this after doing changes on the savestate system
-constexpr u32 STATE_VERSION = 147;  // Last changed in PR 10935
+constexpr u32 STATE_VERSION = 148;  // Last changed in PR 10768
 
 // Maps savestate versions to Dolphin versions.
 // Versions after 42 don't need to be added to this list,
@@ -284,7 +284,7 @@ static std::map<double, int> GetSavedStates()
     {
       if (ReadHeader(filename, header))
       {
-        double d = Common::Timer::GetDoubleTime() - header.time;
+        double d = Common::Timer::GetSystemTimeAsDouble() - header.time;
 
         // increase time until unique value is obtained
         while (m.find(d) != m.end())
@@ -359,7 +359,7 @@ static void CompressAndDumpState(CompressAndDumpState_args save_args)
   StateHeader header{};
   SConfig::GetInstance().GetGameID().copy(header.gameID, std::size(header.gameID));
   header.size = s_use_compression ? (u32)buffer_size : 0;
-  header.time = Common::Timer::GetDoubleTime();
+  header.time = Common::Timer::GetSystemTimeAsDouble();
 
   f.WriteArray(&header, 1);
 
@@ -471,7 +471,7 @@ std::string GetInfoStringOfSlot(int slot, bool translate)
   if (!ReadHeader(filename, header))
     return translate ? Common::GetStringT("Unknown") : "Unknown";
 
-  return Common::Timer::GetDateTimeFormatted(header.time);
+  return Common::Timer::SystemTimeAsDoubleToString(header.time);
 }
 
 u64 GetUnixTimeOfSlot(int slot)

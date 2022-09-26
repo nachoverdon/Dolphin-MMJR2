@@ -160,8 +160,7 @@ public final class InputOverlay extends SurfaceView implements OnTouchListener
 
     int doubleTapButton = IntSetting.MAIN_DOUBLE_TAP_BUTTON.getIntGlobal();
 
-    if (mPreferences.getInt("wiiController", OVERLAY_WIIMOTE_NUNCHUK) !=
-            InputOverlay.OVERLAY_WIIMOTE_CLASSIC &&
+    if (getConfiguredControllerType() != InputOverlay.OVERLAY_WIIMOTE_CLASSIC &&
             doubleTapButton == InputOverlayPointer.DOUBLE_TAP_CLASSIC_A)
     {
       doubleTapButton = InputOverlayPointer.DOUBLE_TAP_A;
@@ -390,8 +389,7 @@ public final class InputOverlay extends SurfaceView implements OnTouchListener
     int fingerPositionX = (int) event.getX(pointerIndex);
     int fingerPositionY = (int) event.getY(pointerIndex);
 
-    final SharedPreferences sPrefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-    int controller = sPrefs.getInt("wiiController", 3);
+    int controller = getConfiguredControllerType();
     String orientation =
             getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ?
                     "-Portrait" : "";
@@ -875,7 +873,7 @@ public final class InputOverlay extends SurfaceView implements OnTouchListener
       }
       else
       {
-        switch (mPreferences.getInt("wiiController", 3))
+        switch (getConfiguredControllerType())
         {
           case OVERLAY_GAMECUBE:
             addGameCubeOverlayControls(orientation);
@@ -922,14 +920,14 @@ public final class InputOverlay extends SurfaceView implements OnTouchListener
             getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 
     // Values for these come from R.array.controllersEntries
-    if (!NativeLibrary.IsEmulatingWii() || mPreferences.getInt("wiiController", 3) == 0)
+    if (!NativeLibrary.IsEmulatingWii() || getConfiguredControllerType() == OVERLAY_GAMECUBE)
     {
       if (isLandscape)
         gcDefaultOverlay();
       else
         gcPortraitDefaultOverlay();
     }
-    else if (mPreferences.getInt("wiiController", 3) == 4)
+    else if (getConfiguredControllerType() == OVERLAY_WIIMOTE_CLASSIC)
     {
       if (isLandscape)
         wiiClassicDefaultOverlay();
@@ -952,6 +950,17 @@ public final class InputOverlay extends SurfaceView implements OnTouchListener
     refreshControls();
   }
 
+  public static int getConfiguredControllerType(Context context)
+  {
+    return PreferenceManager.getDefaultSharedPreferences(context)
+            .getInt("wiiController", OVERLAY_WIIMOTE_NUNCHUK);
+  }
+
+  private int getConfiguredControllerType()
+  {
+    return mPreferences.getInt("wiiController", OVERLAY_WIIMOTE_NUNCHUK);
+  }
+
   private void saveControlPosition(int sharedPrefsId, int x, int y, int controller,
           String orientation)
   {
@@ -964,11 +973,11 @@ public final class InputOverlay extends SurfaceView implements OnTouchListener
 
   private static String getKey(int sharedPrefsId, int controller, String orientation, String suffix)
   {
-    if (controller == 2 && WIIMOTE_H_BUTTONS.contains(sharedPrefsId))
+    if (controller == OVERLAY_WIIMOTE_SIDEWAYS && WIIMOTE_H_BUTTONS.contains(sharedPrefsId))
     {
       return sharedPrefsId + "_H" + orientation + suffix;
     }
-    else if (controller == 1 && WIIMOTE_O_BUTTONS.contains(sharedPrefsId))
+    else if (controller == OVERLAY_WIIMOTE && WIIMOTE_O_BUTTONS.contains(sharedPrefsId))
     {
       return sharedPrefsId + "_O" + orientation + suffix;
     }
@@ -1026,7 +1035,7 @@ public final class InputOverlay extends SurfaceView implements OnTouchListener
 
     // SharedPreference to retrieve the X and Y coordinates for the InputOverlayDrawableButton.
     final SharedPreferences sPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-    int controller = sPrefs.getInt("wiiController", 3);
+    int controller = getConfiguredControllerType(context);
 
     // Decide scale based on button ID and user preference
     float scale;
@@ -1136,7 +1145,7 @@ public final class InputOverlay extends SurfaceView implements OnTouchListener
 
     // SharedPreference to retrieve the X and Y coordinates for the InputOverlayDrawableDpad.
     final SharedPreferences sPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-    int controller = sPrefs.getInt("wiiController", 3);
+    int controller = getConfiguredControllerType(context);
 
     // Decide scale based on button ID and user preference
     float scale;
@@ -1212,7 +1221,7 @@ public final class InputOverlay extends SurfaceView implements OnTouchListener
 
     // SharedPreference to retrieve the X and Y coordinates for the InputOverlayDrawableJoystick.
     final SharedPreferences sPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-    int controller = sPrefs.getInt("wiiController", 3);
+    int controller = getConfiguredControllerType(context);
 
     // Decide scale based on user preference
     float scale = 0.275f;
