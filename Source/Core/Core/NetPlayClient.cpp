@@ -152,6 +152,10 @@ NetPlayClient::NetPlayClient(const std::string& address, const u16 port, NetPlay
       return;
     }
 
+    // Update time in milliseconds of no acknoledgment of
+    // sent packets before a connection is deemed disconnected
+    enet_peer_timeout(m_server, 0, PEER_TIMEOUT.count(), PEER_TIMEOUT.count());
+
     ENetEvent netEvent;
     int net = enet_host_service(m_client, &netEvent, 5000);
     if (net > 0 && netEvent.type == ENET_EVENT_TYPE_CONNECT)
@@ -207,6 +211,11 @@ NetPlayClient::NetPlayClient(const std::string& address, const u16 port, NetPlay
         {
         case ENET_EVENT_TYPE_CONNECT:
           m_server = netEvent.peer;
+
+          // Update time in milliseconds of no acknoledgment of
+          // sent packets before a connection is deemed disconnected
+          enet_peer_timeout(m_server, 0, PEER_TIMEOUT.count(), PEER_TIMEOUT.count());
+
           if (Connect())
           {
             m_connection_state = ConnectionState::Connected;
@@ -217,7 +226,7 @@ NetPlayClient::NetPlayClient(const std::string& address, const u16 port, NetPlay
           break;
         }
       }
-      if (connect_timer.GetTimeElapsed() > 5000)
+      if (connect_timer.ElapsedMs() > 5000)
         break;
     }
     m_dialog->OnConnectionError(_trans("Could not communicate with host."));

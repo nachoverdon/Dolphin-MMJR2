@@ -595,6 +595,10 @@ void MainWindow::ConnectHotkeys()
           &MainWindow::StateSaveSlot);
   connect(m_hotkey_scheduler, &HotkeyScheduler::SetStateSlotHotkey, this,
           &MainWindow::SetStateSlot);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::IncrementSelectedStateSlotHotkey, this,
+          &MainWindow::IncrementSelectedStateSlot);
+  connect(m_hotkey_scheduler, &HotkeyScheduler::DecrementSelectedStateSlotHotkey, this,
+          &MainWindow::DecrementSelectedStateSlot);
   connect(m_hotkey_scheduler, &HotkeyScheduler::StartRecording, this,
           &MainWindow::OnStartRecording);
   connect(m_hotkey_scheduler, &HotkeyScheduler::PlayRecording, this, &MainWindow::OnPlayRecording);
@@ -725,8 +729,8 @@ QStringList MainWindow::PromptFileNames()
   QStringList paths = DolphinFileDialog::getOpenFileNames(
       this, tr("Select a File"),
       settings.value(QStringLiteral("mainwindow/lastdir"), QString{}).toString(),
-      QStringLiteral("%1 (*.elf *.dol *.gcm *.iso *.tgc *.wbfs *.ciso *.gcz *.wia *.rvz *.wad "
-                     "*.dff *.m3u *.json);;%2 (*)")
+      QStringLiteral("%1 (*.elf *.dol *.gcm *.iso *.tgc *.wbfs *.ciso *.gcz *.wia *.rvz "
+                     "hif_000000.nfs *.wad *.dff *.m3u *.json);;%2 (*)")
           .arg(tr("All GC/Wii files"))
           .arg(tr("All Files")));
 
@@ -1356,6 +1360,22 @@ void MainWindow::SetStateSlot(int slot)
   Core::DisplayMessage(StringFromFormat("Selected slot %d - %s", m_state_slot,
                                         State::GetInfoStringOfSlot(m_state_slot, false).c_str()),
                        2500);
+}
+
+void MainWindow::IncrementSelectedStateSlot()
+{
+  int state_slot = m_state_slot + 1;
+  if (state_slot > State::NUM_STATES)
+    state_slot = 1;
+  m_menu_bar->SetStateSlot(state_slot);
+}
+
+void MainWindow::DecrementSelectedStateSlot()
+{
+  int state_slot = m_state_slot - 1;
+  if (state_slot < 1)
+    state_slot = State::NUM_STATES;
+  m_menu_bar->SetStateSlot(state_slot);
 }
 
 void MainWindow::PerformOnlineUpdate(const std::string& region)
