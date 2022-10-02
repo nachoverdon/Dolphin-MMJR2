@@ -49,4 +49,7 @@ public class PermissionsHandler
 
     return true;
   }
+
+  public static void requestWritePermission(FragmentActivity mActivity) {
+  }
 }

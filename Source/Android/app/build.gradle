@@ -109,6 +109,7 @@ dependencies {
     implementation 'androidx.fragment:fragment:1.4.1'
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.2.0'
     implementation 'com.google.android.material:material:1.6.0'
+	implementation 'androidx.core:core-splashscreen:1.0.0'
 
     // Android TV UI libraries.
     implementation 'androidx.leanback:leanback:1.0.0'
@@ -134,7 +135,7 @@ def getVersion() {
         logger.error(e + ': Cannot find git, defaulting to dummy version number')
     }
 
-    return '2.0-17174'
+    return '2.0-17229'
 }
 
 

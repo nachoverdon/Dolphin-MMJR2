@@ -70,8 +70,6 @@
     <color name="dialog_background">#fafafa</color>
     <color name="ripple_white">#d3d3d3</color>
 
-    <color name="dolphin_accent_wii">#9e9e9e</color>
-    <color name="dolphin_accent_wiiware">#2979ff</color>
     <color name="dolphin_accent_gamecube">#651fff</color>
 
     <color name="tv_card_unselected">#444444</color>

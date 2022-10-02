@@ -122,9 +122,9 @@ List of user folders:
 * `Cache`: used to cache the ISO list
 * `Config`: configuration files
 * `Dump`: anything dumped from Dolphin
-* `GameConfig`: additional settings to be applied per-game
+* `GameSettings`: additional settings to be applied per-game
 * `GC`: memory cards and system BIOS
-* `Load`: custom textures
+* `Load`: custom textures, graphicmods, riivolution patches, wiisdsync
 * `Logs`: logs, if enabled
 * `ScreenShots`: screenshots taken via Dolphin
 * `StateSaves`: save states
@@ -139,4 +139,9 @@ in the ISO list and selecting "ISO Properties".
 ## Riivolution Patches
 
 Riivolution Patches have to be placed in the user directory under
-`Load/Riivolution/`. Once you have extracted the patches here, long press on the game & select `Start with Riivolution Patches`
+`Load/Riivolution/[GameID]/`. Once you have extracted the patches here, long press on the game and select `Start with Riivolution Patches`
+
+## GraphicMods
+
+GraphicMods have to be placed in the user directory under
+`Load/GraphicMods/[GameID]/`. Once you have extracted the graphic mods here, you will need to enable them in settings `Settings > Graphics > Advanced > Graphic Mods`

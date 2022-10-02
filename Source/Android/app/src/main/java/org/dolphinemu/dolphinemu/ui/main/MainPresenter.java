@@ -28,6 +28,7 @@ import org.dolphinemu.dolphinemu.utils.BooleanSupplier;
 import org.dolphinemu.dolphinemu.utils.CompletableFuture;
 import org.dolphinemu.dolphinemu.utils.ContentHandler;
 import org.dolphinemu.dolphinemu.utils.FileBrowserHelper;
+import org.dolphinemu.dolphinemu.utils.PermissionsHandler;
 import org.dolphinemu.dolphinemu.utils.WiiUtils;
 
 import java.util.Arrays;
@@ -57,6 +58,8 @@ public final class MainPresenter
 
   public void onCreate()
   {
+    // Ask the user to grant write permission if it's not already granted
+    PermissionsHandler.checkWritePermission(mActivity);
     String versionName = BuildConfig.VERSION_NAME;
     mView.setVersionString(versionName);
 
