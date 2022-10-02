@@ -15,6 +15,7 @@ import org.dolphinemu.dolphinemu.features.settings.model.BooleanSetting;
 import org.dolphinemu.dolphinemu.model.GameFile;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 public class PicassoUtils
 {
@@ -36,11 +37,33 @@ public class PicassoUtils
 
   public static void loadGameCover(ImageView imageView, GameFile gameFile)
   {
-    File cover = new File(gameFile.getCustomCoverPath());
-    if (cover.exists())
+
+    String customCoverPath = gameFile.getCustomCoverPath();
+    Uri customCoverUri = null;
+    boolean customCoverExists = false;
+    if (ContentHandler.isContentUri(customCoverPath))
+    {
+      try
+      {
+        customCoverUri = ContentHandler.unmangle(customCoverPath);
+        customCoverExists = true;
+      }
+      catch (FileNotFoundException | SecurityException ignored)
+      {
+        // Let customCoverExists remain false
+      }
+    }
+    else
+    {
+      customCoverUri = Uri.parse(customCoverPath);
+      customCoverExists = new File(customCoverPath).exists();
+    }
+
+    File cover;
+    if (customCoverExists)
     {
       Picasso.get()
-              .load(cover)
+              .load(customCoverUri)
               .noFade()
               .noPlaceholder()
               .fit()
