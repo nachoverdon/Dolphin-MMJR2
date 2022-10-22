@@ -315,6 +315,11 @@ public:
 
   OPCODE_CALLBACK(CPState& GetCPState()) { return m_cpmem; }
 
+  OPCODE_CALLBACK(u32 GetVertexSize(u8 vat))
+  {
+    return VertexLoaderBase::GetVertexSize(GetCPState().vtx_desc, GetCPState().vtx_attr[vat]);
+  }
+
   QString text;
   CPState m_cpmem;
 };
@@ -729,6 +734,11 @@ public:
   OPCODE_CALLBACK(void OnCommand(const u8* data, u32 size)) {}
 
   OPCODE_CALLBACK(CPState& GetCPState()) { return m_cpmem; }
+
+  OPCODE_CALLBACK(u32 GetVertexSize(u8 vat))
+  {
+    return VertexLoaderBase::GetVertexSize(GetCPState().vtx_desc, GetCPState().vtx_attr[vat]);
+  }
 
   QString text;
   CPState m_cpmem;
