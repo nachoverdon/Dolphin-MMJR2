@@ -63,6 +63,8 @@ public final class SettingsActivityPresenter
 
   private void loadSettingsUI()
   {
+    mView.hideLoading();
+
     if (mSettings.isEmpty())
     {
       if (!TextUtils.isEmpty(mGameId))
@@ -92,11 +94,9 @@ public final class SettingsActivityPresenter
     }
     else
     {
-      mView.showLoading();
+    mView.showLoading();
 
-      new AfterDirectoryInitializationRunner()
-              .setFinishedCallback(mView::hideLoading)
-              .runWithLifecycle(mActivity, true, this::loadSettingsUI);
+    new AfterDirectoryInitializationRunner().runWithLifecycle(mActivity, this::loadSettingsUI);
     }
   }
 

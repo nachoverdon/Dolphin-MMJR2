@@ -79,7 +79,7 @@ public final class TvMainActivity extends FragmentActivity
     if (DirectoryInitialization.shouldStart(this))
     {
       DirectoryInitialization.start(this);
-      GameFileCacheManager.startLoad(this);
+      GameFileCacheManager.startLoad();
     }
 
     mPresenter.onResume();
@@ -299,7 +299,7 @@ public final class TvMainActivity extends FragmentActivity
       if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
       {
         DirectoryInitialization.start(this);
-        GameFileCacheManager.startLoad(this);
+        GameFileCacheManager.startLoad();
       }
       else
       {
@@ -315,7 +315,7 @@ public final class TvMainActivity extends FragmentActivity
   public void onRefresh()
   {
     setRefreshing(true);
-    GameFileCacheManager.startRescan(this);
+    GameFileCacheManager.startRescan();
   }
 
   private void buildRowsAdapter()
@@ -325,7 +325,7 @@ public final class TvMainActivity extends FragmentActivity
 
     if (PermissionsHandler.hasWriteAccess(this))
     {
-      GameFileCacheManager.startLoad(this);
+      GameFileCacheManager.startLoad();
     }
 
     for (Platform platform : Platform.values())

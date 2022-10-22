@@ -59,23 +59,15 @@ public class AfterDirectoryInitializationRunner
    * If the passed-in activity gets destroyed before this operation finishes,
    * it will be automatically canceled.
    */
-  public void runWithLifecycle(ComponentActivity activity, boolean abortOnFailure,
-          Runnable runnable)
+  public void runWithLifecycle(ComponentActivity activity, Runnable runnable)
   {
     if (DirectoryInitialization.areDolphinDirectoriesReady())
     {
-      runFinishedCallback();
       runnable.run();
-    }
-    else if (abortOnFailure &&
-            showErrorMessage(activity,
-                    DirectoryInitialization.getDolphinDirectoriesState().getValue()))																				 
-    {
-      runFinishedCallback();
     }
     else
     {
-      mObserver = createObserver(activity, abortOnFailure, runnable);
+      mObserver = createObserver(runnable);
       DirectoryInitialization.getDolphinDirectoriesState().observe(activity, mObserver);
     }
   }
@@ -96,46 +88,26 @@ public class AfterDirectoryInitializationRunner
    * the attempt to run the Runnable will never be aborted, and the Runnable
    * is guaranteed to run if directory initialization ever finishes.
    */
-  public void runWithoutLifecycle(Context context, boolean abortOnFailure, Runnable runnable)
+  public void runWithoutLifecycle(Runnable runnable)
   {
     if (DirectoryInitialization.areDolphinDirectoriesReady())
     {
-      runFinishedCallback();
       runnable.run();
-    }
-    else if (abortOnFailure &&
-            showErrorMessage(context,
-                    DirectoryInitialization.getDolphinDirectoriesState().getValue()))
-    {
-      runFinishedCallback();
     }
     else
     {
-      mObserver = createObserver(context, abortOnFailure, runnable);
+      mObserver = createObserver(runnable);
       DirectoryInitialization.getDolphinDirectoriesState().observeForever(mObserver);
     }
   }
 
-  private Observer<DirectoryInitializationState> createObserver(Context context,
-          boolean abortOnFailure, Runnable runnable)
+  private Observer<DirectoryInitializationState> createObserver(Runnable runnable)
   {
     return (state) ->
     {
-      boolean done = state == DirectoryInitializationState.DOLPHIN_DIRECTORIES_INITIALIZED;
-
-      if (!done && abortOnFailure)
-      {
-        done = showErrorMessage(context, state);
-      }
-
-      if (done)
-      {
-        cancel();
-        runFinishedCallback();
-      }
-
       if (state == DirectoryInitializationState.DOLPHIN_DIRECTORIES_INITIALIZED)
       {
+        cancel();
         runnable.run();
       }
     };
@@ -164,6 +136,3 @@ public class AfterDirectoryInitializationRunner
     }
   }
 }
-
-
-
