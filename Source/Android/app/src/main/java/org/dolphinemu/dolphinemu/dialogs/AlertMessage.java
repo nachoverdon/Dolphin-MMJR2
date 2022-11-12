@@ -12,6 +12,8 @@ import androidx.fragment.app.DialogFragment;
 import org.dolphinemu.dolphinemu.NativeLibrary;
 import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.activities.EmulationActivity;
+import org.dolphinemu.dolphinemu.features.settings.model.BooleanSetting;
+import org.dolphinemu.dolphinemu.features.settings.model.NativeConfig;
 
 public final class AlertMessage extends DialogFragment
 {
@@ -81,7 +83,7 @@ public final class AlertMessage extends DialogFragment
     {
       builder.setNeutralButton(R.string.ignore_warning_alert_messages, (dialog, which) ->
       {
-        emulationActivity.setIgnoreWarnings(true);
+        BooleanSetting.MAIN_USE_PANIC_HANDLERS.setBoolean(NativeConfig.LAYER_CURRENT, false);
         dialog.dismiss();
         NativeLibrary.NotifyAlertMessageLock();
       });
