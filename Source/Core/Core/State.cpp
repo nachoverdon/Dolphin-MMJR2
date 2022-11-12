@@ -624,7 +624,6 @@ void LoadAs(const std::string& filename)
         if (!Movie::IsJustStartingRecordingInputFromSaveState())
         {
           std::lock_guard lk(s_undo_load_buffer_mutex);
-		  //std::lock_guard lk2(s_undo_load_buffer_mutex); ???
           SaveToBuffer(s_undo_load_buffer);
           const std::string dtmpath = File::GetUserPath(D_STATESAVES_IDX) + "undo.dtm";
           if (Movie::IsMovieActive())

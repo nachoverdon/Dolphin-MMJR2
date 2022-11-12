@@ -37,6 +37,8 @@
 #include "DolphinQt/GCMemcardManager.h"
 #include "DolphinQt/QtUtils/DolphinFileDialog.h"
 #include "DolphinQt/QtUtils/ModalMessageBox.h"
+#include "DolphinQt/QtUtils/NonDefaultQPushButton.h"
+#include "DolphinQt/QtUtils/SignalBlocking.h"
 #include "DolphinQt/Settings.h"
 #include "DolphinQt/Settings/BroadbandAdapterSettingsDialog.h"
 
@@ -95,7 +97,7 @@ void GameCubePane::CreateWidgets()
   {
     m_slot_combos[slot] = new QComboBox(device_box);
     m_slot_combos[slot]->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
-    m_slot_buttons[slot] = new QPushButton(tr("..."), device_box);
+    m_slot_buttons[slot] = new NonDefaultQPushButton(tr("..."), device_box);
     m_slot_buttons[slot]->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   }
 
@@ -182,7 +184,7 @@ void GameCubePane::CreateWidgets()
   gba_row++;
 
   m_gba_bios_edit = new QLineEdit();
-  m_gba_browse_bios = new QPushButton(QStringLiteral("..."));
+  m_gba_browse_bios = new NonDefaultQPushButton(QStringLiteral("..."));
   gba_layout->addWidget(new QLabel(tr("BIOS:")), gba_row, 0);
   gba_layout->addWidget(m_gba_bios_edit, gba_row, 1);
   gba_layout->addWidget(m_gba_browse_bios, gba_row, 2);
@@ -191,7 +193,7 @@ void GameCubePane::CreateWidgets()
   for (size_t i = 0; i < m_gba_rom_edits.size(); ++i)
   {
     m_gba_rom_edits[i] = new QLineEdit();
-    m_gba_browse_roms[i] = new QPushButton(QStringLiteral("..."));
+    m_gba_browse_roms[i] = new NonDefaultQPushButton(QStringLiteral("..."));
     gba_layout->addWidget(new QLabel(tr("Port %1 ROM:").arg(i + 1)), gba_row, 0);
     gba_layout->addWidget(m_gba_rom_edits[i], gba_row, 1);
     gba_layout->addWidget(m_gba_browse_roms[i], gba_row, 2);
@@ -203,7 +205,7 @@ void GameCubePane::CreateWidgets()
   gba_row++;
 
   m_gba_saves_edit = new QLineEdit();
-  m_gba_browse_saves = new QPushButton(QStringLiteral("..."));
+  m_gba_browse_saves = new NonDefaultQPushButton(QStringLiteral("..."));
   gba_layout->addWidget(new QLabel(tr("Saves:")), gba_row, 0);
   gba_layout->addWidget(m_gba_saves_edit, gba_row, 1);
   gba_layout->addWidget(m_gba_browse_saves, gba_row, 2);
@@ -237,6 +239,7 @@ void GameCubePane::ConnectWidgets()
             &GameCubePane::SaveSettings);
     connect(m_slot_buttons[slot], &QPushButton::clicked, [this, slot] { OnConfigPressed(slot); });
   }
+
   for (ExpansionInterface::Slot slot : ExpansionInterface::MEMCARD_SLOTS)
   {
     connect(m_memcard_paths[slot], &QLineEdit::editingFinished, [this, slot] {
@@ -537,9 +540,9 @@ void GameCubePane::BrowseGBASaves()
 void GameCubePane::LoadSettings()
 {
   // IPL Settings
-  m_skip_main_menu->setChecked(Config::Get(Config::MAIN_SKIP_IPL));
-  m_language_combo->setCurrentIndex(
-      m_language_combo->findData(Config::Get(Config::MAIN_GC_LANGUAGE)));
+  SignalBlocking(m_skip_main_menu)->setChecked(Config::Get(Config::MAIN_SKIP_IPL));
+  SignalBlocking(m_language_combo)
+      ->setCurrentIndex(m_language_combo->findData(Config::Get(Config::MAIN_GC_LANGUAGE)));
 
   bool have_menu = false;
 
@@ -560,11 +563,10 @@ void GameCubePane::LoadSettings()
   // Device Settings
   for (ExpansionInterface::Slot slot : ExpansionInterface::SLOTS)
   {
-    QSignalBlocker blocker(m_slot_combos[slot]);
     const ExpansionInterface::EXIDeviceType exi_device =
         Config::Get(Config::GetInfoForEXIDevice(slot));
-    m_slot_combos[slot]->setCurrentIndex(
-        m_slot_combos[slot]->findData(static_cast<int>(exi_device)));
+    SignalBlocking(m_slot_combos[slot])
+        ->setCurrentIndex(m_slot_combos[slot]->findData(static_cast<int>(exi_device)));
     UpdateButton(slot);
   }
 
@@ -576,15 +578,19 @@ void GameCubePane::LoadSettings()
         ->setText(QString::fromStdString(Config::Get(Config::GetInfoForAGPCartPath(slot))));
   }
 
-
 #ifdef HAS_LIBMGBA
   // GBA Settings
-  m_gba_threads->setChecked(Config::Get(Config::MAIN_GBA_THREADS));
-  m_gba_bios_edit->setText(QString::fromStdString(File::GetUserPath(F_GBABIOS_IDX)));
-  m_gba_save_rom_path->setChecked(Config::Get(Config::MAIN_GBA_SAVES_IN_ROM_PATH));
-  m_gba_saves_edit->setText(QString::fromStdString(File::GetUserPath(D_GBASAVES_IDX)));
+  SignalBlocking(m_gba_threads)->setChecked(Config::Get(Config::MAIN_GBA_THREADS));
+  SignalBlocking(m_gba_bios_edit)
+      ->setText(QString::fromStdString(File::GetUserPath(F_GBABIOS_IDX)));
+  SignalBlocking(m_gba_save_rom_path)->setChecked(Config::Get(Config::MAIN_GBA_SAVES_IN_ROM_PATH));
+  SignalBlocking(m_gba_saves_edit)
+      ->setText(QString::fromStdString(File::GetUserPath(D_GBASAVES_IDX)));
   for (size_t i = 0; i < m_gba_rom_edits.size(); ++i)
-    m_gba_rom_edits[i]->setText(QString::fromStdString(Config::Get(Config::MAIN_GBA_ROM_PATHS[i])));
+  {
+    SignalBlocking(m_gba_rom_edits[i])
+        ->setText(QString::fromStdString(Config::Get(Config::MAIN_GBA_ROM_PATHS[i])));
+  }
 #endif
 }
 

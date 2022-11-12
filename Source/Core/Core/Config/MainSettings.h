@@ -100,6 +100,7 @@ extern const Info<bool> MAIN_CONNECT_WIIMOTES_FOR_CONTROLLER_INTERFACE;
 extern const Info<bool> MAIN_RUN_COMPARE_SERVER;
 extern const Info<bool> MAIN_RUN_COMPARE_CLIENT;
 extern const Info<bool> MAIN_MMU;
+extern const Info<bool> MAIN_PAUSE_ON_PANIC;
 extern const Info<int> MAIN_BB_DUMP_PORT;
 extern const Info<bool> MAIN_SYNC_GPU;
 extern const Info<int> MAIN_SYNC_GPU_MAX_DISTANCE;
