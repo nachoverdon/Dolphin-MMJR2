@@ -76,9 +76,6 @@ void InitAVCodec()
   static bool first_run = true;
   if (first_run)
   {
-#if LIBAVCODEC_VERSION_MICRO >= 100 && LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
-    av_register_all();
-#endif
     av_log_set_level(AV_LOG_DEBUG);
     av_log_set_callback([](void* ptr, int level, const char* fmt, va_list vl) {
       if (level < 0)

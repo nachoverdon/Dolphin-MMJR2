@@ -10,6 +10,7 @@
 #include <QProgressDialog>
 #include <QPushButton>
 
+#include "Common/Assert.h"
 #include "Common/FileUtil.h"
 #include "Common/Flag.h"
 
@@ -71,7 +72,10 @@ static void ShowResult(QWidget* parent, WiiUtils::UpdateResult result)
                               QObject::tr("The game disc does not contain any usable "
                                           "update information."));
     break;
-  }
+  default:
+    ASSERT(false);
+    break;
+	}
 }
 
 template <typename Callable, typename... Args>
