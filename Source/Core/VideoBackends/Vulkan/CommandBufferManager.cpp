@@ -95,34 +95,6 @@ bool CommandBufferManager::CreateCommandBuffers()
     }
   }
 
-  for (VkDescriptorPool& descriptor_pool : m_descriptor_pools)
-  {
-    // TODO: A better way to choose the number of descriptors.
-    const std::array<VkDescriptorPoolSize, 5> pool_sizes{{
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 500000},
-        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 500000},
-        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 16},
-        {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 16384},
-        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 16384},
-    }};
-
-    const VkDescriptorPoolCreateInfo pool_create_info = {
-        VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        nullptr,
-        0,
-        100000,  // tweak this
-        static_cast<u32>(pool_sizes.size()),
-        pool_sizes.data(),
-    };
-
-    res = vkCreateDescriptorPool(device, &pool_create_info, nullptr, &descriptor_pool);
-    if (res != VK_SUCCESS)
-    {
-      LOG_VULKAN_ERROR(res, "vkCreateDescriptorPool failed: ");
-      return false;
-    }
-  }
-
   res = vkCreateSemaphore(device, &semaphore_create_info, nullptr, &m_present_semaphore);
   if (res != VK_SUCCESS)
   {
@@ -160,28 +132,84 @@ void CommandBufferManager::DestroyCommandBuffers()
       vkDestroyFence(device, resources.fence, nullptr);
   }
 
-  for (VkDescriptorPool descriptor_pool : m_descriptor_pools)
+  for (FrameResources& resources : m_frame_resources)
   {
-    if (descriptor_pool != VK_NULL_HANDLE)
+    for (VkDescriptorPool descriptor_pool : resources.descriptor_pools)
+    {
       vkDestroyDescriptorPool(device, descriptor_pool, nullptr);
+    }
   }
 
   vkDestroySemaphore(device, m_present_semaphore, nullptr);
 }
 
-VkDescriptorSet CommandBufferManager::AllocateDescriptorSet(VkDescriptorSetLayout set_layout)
+VkDescriptorPool CommandBufferManager::CreateDescriptorPool(u32 max_descriptor_sets)
 {
-  VkDescriptorSetAllocateInfo allocate_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-                                               nullptr, GetCurrentDescriptorPool(), 1, &set_layout};
+  /*
+   * Worst case descriptor counts according to the descriptor layout created in ObjectCache.cpp:
+   * UNIFORM_BUFFER_DYNAMIC: 3
+   * COMBINED_IMAGE_SAMPLER: 18
+   * STORAGE_BUFFER: 2
+   * UNIFORM_TEXEL_BUFFER: 3
+   * STORAGE_IMAGE: 1
+   */
+  const std::array<VkDescriptorPoolSize, 5> pool_sizes{{
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, max_descriptor_sets * 3},
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, max_descriptor_sets * 18},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, max_descriptor_sets * 2},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, max_descriptor_sets * 3},
+      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, max_descriptor_sets * 1},
+  }};
 
-  VkDescriptorSet descriptor_set;
-  VkResult res =
-      vkAllocateDescriptorSets(g_vulkan_context->GetDevice(), &allocate_info, &descriptor_set);
+  const VkDescriptorPoolCreateInfo pool_create_info = {
+      VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO, nullptr,           0, max_descriptor_sets,
+      static_cast<u32>(pool_sizes.size()),           pool_sizes.data(),
+  };
+
+  VkDevice device = g_vulkan_context->GetDevice();
+  VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
+  VkResult res = vkCreateDescriptorPool(device, &pool_create_info, nullptr, &descriptor_pool);
   if (res != VK_SUCCESS)
   {
-    // Failing to allocate a descriptor set is not a fatal error, we can
-    // recover by moving to the next command buffer.
+    LOG_VULKAN_ERROR(res, "vkCreateDescriptorPool failed: ");
     return VK_NULL_HANDLE;
+  }
+  return descriptor_pool;
+}
+
+VkDescriptorSet CommandBufferManager::AllocateDescriptorSet(VkDescriptorSetLayout set_layout)
+{
+  VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
+  FrameResources& resources = GetCurrentFrameResources();
+
+  if (!resources.descriptor_pools.empty()) [[likely]]
+  {
+    VkDescriptorSetAllocateInfo allocate_info = {
+        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO, nullptr,
+        resources.descriptor_pools[resources.current_descriptor_pool_index], 1, &set_layout};
+
+    VkResult res =
+        vkAllocateDescriptorSets(g_vulkan_context->GetDevice(), &allocate_info, &descriptor_set);
+    if (res != VK_SUCCESS &&
+        resources.descriptor_pools.size() > resources.current_descriptor_pool_index + 1)
+    {
+      // Mark the next descriptor set as active and try again.
+      resources.current_descriptor_pool_index++;
+      descriptor_set = AllocateDescriptorSet(set_layout);
+    }
+  }
+
+  if (descriptor_set == VK_NULL_HANDLE) [[unlikely]]
+  {
+    VkDescriptorPool descriptor_pool = CreateDescriptorPool(DESCRIPTOR_SETS_PER_POOL);
+    m_descriptor_set_count += DESCRIPTOR_SETS_PER_POOL;
+    if (descriptor_pool == VK_NULL_HANDLE) [[unlikely]]
+      return VK_NULL_HANDLE;
+
+    resources.descriptor_pools.push_back(descriptor_pool);
+    resources.current_descriptor_pool_index =
+        static_cast<u32>(resources.descriptor_pools.size()) - 1;
+    descriptor_set = AllocateDescriptorSet(set_layout);
   }
 
   return descriptor_set;
@@ -270,8 +298,8 @@ void CommandBufferManager::WaitForCommandBufferCompletion(u32 index)
   // Clean up any resources for command buffers between the last known completed buffer and this
   // now-completed command buffer. If we use >2 buffers, this may be more than one buffer.
   const u64 now_completed_counter = resources.fence_counter;
-  u32 cleanup_index = (index + 1) % NUM_COMMAND_BUFFERS;
-  while (cleanup_index != index)
+  u32 cleanup_index = (m_current_cmd_buffer + 1) % NUM_COMMAND_BUFFERS;
+  while (cleanup_index != m_current_cmd_buffer)
   {
     CmdBufferResources& cleanup_resources = m_command_buffers[cleanup_index];
     if (cleanup_resources.fence_counter > now_completed_counter)
@@ -303,7 +331,8 @@ void CommandBufferManager::SubmitCommandBuffer(bool submit_on_worker_thread,
     if (res != VK_SUCCESS)
     {
       LOG_VULKAN_ERROR(res, "vkEndCommandBuffer failed: ");
-      PanicAlertFmt("Failed to end command buffer");
+      PanicAlertFmt("Failed to end command buffer: {} ({})", VkResultToString(res),
+                    static_cast<int>(res));
     }
   }
 
@@ -347,11 +376,29 @@ void CommandBufferManager::SubmitCommandBuffer(bool submit_on_worker_thread,
       cmd_buffer_index = (cmd_buffer_index + 1) % NUM_COMMAND_BUFFERS;
     }
 
-    // Reset the descriptor pool
-    VkResult res =
-        vkResetDescriptorPool(g_vulkan_context->GetDevice(), GetCurrentDescriptorPool(), 0);
-    if (res != VK_SUCCESS)
-      LOG_VULKAN_ERROR(res, "vkResetDescriptorPool failed: ");
+    // Reset the descriptor pools
+    FrameResources& frame_resources = GetCurrentFrameResources();
+
+    if (frame_resources.descriptor_pools.size() == 1) [[likely]]
+    {
+      VkResult res = vkResetDescriptorPool(g_vulkan_context->GetDevice(),
+                                           frame_resources.descriptor_pools[0], 0);
+      if (res != VK_SUCCESS)
+        LOG_VULKAN_ERROR(res, "vkResetDescriptorPool failed: ");
+    }
+    else [[unlikely]]
+    {
+      for (VkDescriptorPool descriptor_pool : frame_resources.descriptor_pools)
+      {
+        vkDestroyDescriptorPool(g_vulkan_context->GetDevice(), descriptor_pool, nullptr);
+      }
+      frame_resources.descriptor_pools.clear();
+      VkDescriptorPool descriptor_pool = CreateDescriptorPool(m_descriptor_set_count);
+      if (descriptor_pool != VK_NULL_HANDLE) [[likely]]
+        frame_resources.descriptor_pools.push_back(descriptor_pool);
+    }
+
+    frame_resources.current_descriptor_pool_index = 0;
   }
 
   // Switch to next cmdbuffer.
@@ -400,7 +447,8 @@ void CommandBufferManager::SubmitCommandBuffer(u32 command_buffer_index,
   if (res != VK_SUCCESS)
   {
     LOG_VULKAN_ERROR(res, "vkQueueSubmit failed: ");
-    PanicAlertFmt("Failed to submit command buffer.");
+    PanicAlertFmt("Failed to submit command buffer: {} ({})", VkResultToString(res),
+                  static_cast<int>(res));
   }
 
   // Do we have a swap chain to present?
@@ -477,13 +525,6 @@ void CommandBufferManager::BeginCommandBuffer()
   m_current_cmd_buffer = next_buffer_index;
 }
 
-void CommandBufferManager::DeferBufferDestruction(VkBuffer object)
-{
-  CmdBufferResources& cmd_buffer_resources = GetCurrentCmdBufferResources();
-  cmd_buffer_resources.cleanup_resources.push_back(
-      [object]() { vkDestroyBuffer(g_vulkan_context->GetDevice(), object, nullptr); });
-}
-
 void CommandBufferManager::DeferBufferViewDestruction(VkBufferView object)
 {
   CmdBufferResources& cmd_buffer_resources = GetCurrentCmdBufferResources();
@@ -491,11 +532,12 @@ void CommandBufferManager::DeferBufferViewDestruction(VkBufferView object)
       [object]() { vkDestroyBufferView(g_vulkan_context->GetDevice(), object, nullptr); });
 }
 
-void CommandBufferManager::DeferDeviceMemoryDestruction(VkDeviceMemory object)
+void CommandBufferManager::DeferBufferDestruction(VkBuffer buffer, VmaAllocation alloc)
 {
   CmdBufferResources& cmd_buffer_resources = GetCurrentCmdBufferResources();
-  cmd_buffer_resources.cleanup_resources.push_back(
-      [object]() { vkFreeMemory(g_vulkan_context->GetDevice(), object, nullptr); });
+  cmd_buffer_resources.cleanup_resources.push_back([buffer, alloc]() {
+    vmaDestroyBuffer(g_vulkan_context->GetMemoryAllocator(), buffer, alloc);
+  });
 }
 
 void CommandBufferManager::DeferFramebufferDestruction(VkFramebuffer object)
@@ -505,11 +547,11 @@ void CommandBufferManager::DeferFramebufferDestruction(VkFramebuffer object)
       [object]() { vkDestroyFramebuffer(g_vulkan_context->GetDevice(), object, nullptr); });
 }
 
-void CommandBufferManager::DeferImageDestruction(VkImage object)
+void CommandBufferManager::DeferImageDestruction(VkImage image, VmaAllocation alloc)
 {
   CmdBufferResources& cmd_buffer_resources = GetCurrentCmdBufferResources();
   cmd_buffer_resources.cleanup_resources.push_back(
-      [object]() { vkDestroyImage(g_vulkan_context->GetDevice(), object, nullptr); });
+      [image, alloc]() { vmaDestroyImage(g_vulkan_context->GetMemoryAllocator(), image, alloc); });
 }
 
 void CommandBufferManager::DeferImageViewDestruction(VkImageView object)

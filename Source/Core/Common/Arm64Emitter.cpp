@@ -2314,20 +2314,18 @@ void ARM64FloatEmitter::EmitScalarImm(bool M, bool S, u32 type, u32 imm5, ARM64R
           (1 << 12) | (imm5 << 5) | DecodeReg(Rd));
 }
 
-void ARM64FloatEmitter::EmitShiftImm(bool Q, bool U, u32 immh, u32 immb, u32 opcode, ARM64Reg Rd,
-                                     ARM64Reg Rn)
+void ARM64FloatEmitter::EmitShiftImm(bool Q, bool U, u32 imm, u32 opcode, ARM64Reg Rd, ARM64Reg Rn)
 {
-  ASSERT_MSG(DYNA_REC, immh != 0, "Can't have zero immh");
+  ASSERT_MSG(DYNA_REC, (imm & 0b1111000) != 0, "Can't have zero immh");
 
-  Write32((Q << 30) | (U << 29) | (0xF << 24) | (immh << 19) | (immb << 16) | (opcode << 11) |
-          (1 << 10) | (DecodeReg(Rn) << 5) | DecodeReg(Rd));
+  Write32((Q << 30) | (U << 29) | (0xF << 24) | (imm << 16) | (opcode << 11) | (1 << 10) |
+          (DecodeReg(Rn) << 5) | DecodeReg(Rd));
 }
 
-void ARM64FloatEmitter::EmitScalarShiftImm(bool U, u32 immh, u32 immb, u32 opcode, ARM64Reg Rd,
-                                           ARM64Reg Rn)
+void ARM64FloatEmitter::EmitScalarShiftImm(bool U, u32 imm, u32 opcode, ARM64Reg Rd, ARM64Reg Rn)
 {
-  Write32((2 << 30) | (U << 29) | (0x3E << 23) | (immh << 19) | (immb << 16) | (opcode << 11) |
-          (1 << 10) | (DecodeReg(Rn) << 5) | DecodeReg(Rd));
+  Write32((1 << 30) | (U << 29) | (0x3E << 23) | (imm << 16) | (opcode << 11) | (1 << 10) |
+          (DecodeReg(Rn) << 5) | DecodeReg(Rd));
 }
 
 void ARM64FloatEmitter::EmitLoadStoreMultipleStructure(u32 size, bool L, u32 opcode, ARM64Reg Rt,
@@ -3177,13 +3175,11 @@ void ARM64FloatEmitter::UCVTF(u8 size, ARM64Reg Rd, ARM64Reg Rn)
 }
 void ARM64FloatEmitter::SCVTF(u8 size, ARM64Reg Rd, ARM64Reg Rn, int scale)
 {
-  int imm = size * 2 - scale;
-  EmitShiftImm(IsQuad(Rd), 0, imm >> 3, imm & 7, 0x1C, Rd, Rn);
+  EmitShiftImm(IsQuad(Rd), 0, size * 2 - scale, 0x1C, Rd, Rn);
 }
 void ARM64FloatEmitter::UCVTF(u8 size, ARM64Reg Rd, ARM64Reg Rn, int scale)
 {
-  int imm = size * 2 - scale;
-  EmitShiftImm(IsQuad(Rd), 1, imm >> 3, imm & 7, 0x1C, Rd, Rn);
+  EmitShiftImm(IsQuad(Rd), 1, size * 2 - scale, 0x1C, Rd, Rn);
 }
 void ARM64FloatEmitter::SQXTN(u8 dest_size, ARM64Reg Rd, ARM64Reg Rn)
 {
@@ -3514,7 +3510,26 @@ void ARM64FloatEmitter::ZIP2(u8 size, ARM64Reg Rd, ARM64Reg Rn, ARM64Reg Rm)
   EmitPermute(size, 0b111, Rd, Rn, Rm);
 }
 
-// Shift by immediate
+// Scalar shift by immediate
+void ARM64FloatEmitter::SHL(ARM64Reg Rd, ARM64Reg Rn, u32 shift)
+{
+  constexpr size_t src_size = 64;
+  ASSERT_MSG(DYNA_REC, IsDouble(Rd), "Only double registers are supported!");
+  ASSERT_MSG(DYNA_REC, shift < src_size, "Shift amount must less than the element size! {} {}",
+             shift, src_size);
+  EmitScalarShiftImm(0, src_size | shift, 0b01010, Rd, Rn);
+}
+
+void ARM64FloatEmitter::URSHR(ARM64Reg Rd, ARM64Reg Rn, u32 shift)
+{
+  constexpr size_t src_size = 64;
+  ASSERT_MSG(DYNA_REC, IsDouble(Rd), "Only double registers are supported!");
+  ASSERT_MSG(DYNA_REC, shift < src_size, "Shift amount must less than the element size! {} {}",
+             shift, src_size);
+  EmitScalarShiftImm(1, src_size * 2 - shift, 0b00100, Rd, Rn);
+}
+
+// Vector shift by immediate
 void ARM64FloatEmitter::SSHLL(u8 src_size, ARM64Reg Rd, ARM64Reg Rn, u32 shift)
 {
   SSHLL(src_size, Rd, Rn, shift, false);
@@ -3556,73 +3571,39 @@ void ARM64FloatEmitter::UXTL2(u8 src_size, ARM64Reg Rd, ARM64Reg Rn)
   UXTL(src_size, Rd, Rn, true);
 }
 
-void ARM64FloatEmitter::SSHLL(u8 src_size, ARM64Reg Rd, ARM64Reg Rn, u32 shift, bool upper)
+void ARM64FloatEmitter::SHL(u8 src_size, ARM64Reg Rd, ARM64Reg Rn, u32 shift)
 {
   ASSERT_MSG(DYNA_REC, shift < src_size, "Shift amount must less than the element size! {} {}",
              shift, src_size);
-  u32 immh = 0;
-  u32 immb = shift & 0xFFF;
+  EmitShiftImm(1, 0, src_size | shift, 0b01010, Rd, Rn);
+}
 
-  if (src_size == 8)
-  {
-    immh = 1;
-  }
-  else if (src_size == 16)
-  {
-    immh = 2 | ((shift >> 3) & 1);
-  }
-  else if (src_size == 32)
-  {
-    immh = 4 | ((shift >> 3) & 3);
-    ;
-  }
-  EmitShiftImm(upper, 0, immh, immb, 0b10100, Rd, Rn);
+void ARM64FloatEmitter::SSHLL(u8 src_size, ARM64Reg Rd, ARM64Reg Rn, u32 shift, bool upper)
+{
+  ASSERT_MSG(DYNA_REC, shift < src_size, "Shift amount must be less than the element size! {} {}",
+             shift, src_size);
+  EmitShiftImm(upper, 0, src_size | shift, 0b10100, Rd, Rn);
+}
+
+void ARM64FloatEmitter::URSHR(u8 src_size, ARM64Reg Rd, ARM64Reg Rn, u32 shift)
+{
+  ASSERT_MSG(DYNA_REC, shift < src_size, "Shift amount must less than the element size! {} {}",
+             shift, src_size);
+  EmitShiftImm(1, 1, src_size * 2 - shift, 0b00100, Rd, Rn);
 }
 
 void ARM64FloatEmitter::USHLL(u8 src_size, ARM64Reg Rd, ARM64Reg Rn, u32 shift, bool upper)
 {
-  ASSERT_MSG(DYNA_REC, shift < src_size, "Shift amount must less than the element size! {} {}",
+  ASSERT_MSG(DYNA_REC, shift < src_size, "Shift amount must be less than the element size! {} {}",
              shift, src_size);
-  u32 immh = 0;
-  u32 immb = shift & 0xFFF;
-
-  if (src_size == 8)
-  {
-    immh = 1;
-  }
-  else if (src_size == 16)
-  {
-    immh = 2 | ((shift >> 3) & 1);
-  }
-  else if (src_size == 32)
-  {
-    immh = 4 | ((shift >> 3) & 3);
-    ;
-  }
-  EmitShiftImm(upper, 1, immh, immb, 0b10100, Rd, Rn);
+  EmitShiftImm(upper, 1, src_size | shift, 0b10100, Rd, Rn);
 }
 
 void ARM64FloatEmitter::SHRN(u8 dest_size, ARM64Reg Rd, ARM64Reg Rn, u32 shift, bool upper)
 {
-  ASSERT_MSG(DYNA_REC, shift < dest_size, "Shift amount must less than the element size! {} {}",
+  ASSERT_MSG(DYNA_REC, shift < dest_size, "Shift amount must be less than the element size! {} {}",
              shift, dest_size);
-  u32 immh = 0;
-  u32 immb = shift & 0xFFF;
-
-  if (dest_size == 8)
-  {
-    immh = 1;
-  }
-  else if (dest_size == 16)
-  {
-    immh = 2 | ((shift >> 3) & 1);
-  }
-  else if (dest_size == 32)
-  {
-    immh = 4 | ((shift >> 3) & 3);
-    ;
-  }
-  EmitShiftImm(upper, 1, immh, immb, 0b10000, Rd, Rn);
+  EmitShiftImm(upper, 1, dest_size | shift, 0b10000, Rd, Rn);
 }
 
 void ARM64FloatEmitter::SXTL(u8 src_size, ARM64Reg Rd, ARM64Reg Rn, bool upper)
