@@ -26,6 +26,20 @@
         android:scaleType="fitXY"
         tools:src="@drawable/no_banner" />
 
+        <TextView
+            android:id="@+id/text_game_title_inner"
+            style="@android:style/TextAppearance.Material.Subhead"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingTop="8dp"
+            android:paddingLeft="2dp"
+            android:paddingRight="2dp"
+            android:ellipsize="end"
+            android:gravity="center|top"
+            android:maxLines="2"
+            android:visibility="visible"
+            tools:text="The Legend of Zelda: The Wind Waker" />
+
     <TextView
         android:id="@+id/text_game_title"
         style="@android:style/TextAppearance.Material.Subhead"
