@@ -4,6 +4,7 @@ package org.dolphinemu.dolphinemu.adapters;
 
 import static org.dolphinemu.dolphinemu.utils.GlideUtils.*;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Rect;
 import android.view.LayoutInflater;
@@ -31,14 +32,16 @@ public final class GameAdapter extends RecyclerView.Adapter<GameViewHolder> impl
         View.OnLongClickListener
 {
   private List<GameFile> mGameFiles;
+  private Activity mActivity;
 
   /**
    * Initializes the adapter's observer, which watches for changes to the dataset. The adapter will
    * display no data until swapDataSet is called.
    */
-  public GameAdapter()
+  public GameAdapter(Activity activity)
   {
     mGameFiles = new ArrayList<>();
+	mActivity = activity;
   }
 
   /**
@@ -75,7 +78,7 @@ public final class GameAdapter extends RecyclerView.Adapter<GameViewHolder> impl
   {
     Context context = holder.itemView.getContext();
     GameFile gameFile = mGameFiles.get(position);
-    loadGameCover(holder, holder.imageScreenshot, gameFile);
+    loadGameCover(holder, holder.imageScreenshot, gameFile, mActivity);
 
     String country = context.getResources().getStringArray(R.array.countryNames)[gameFile.getCountry()];
     holder.textGameTitle.setText(gameFile.getTitle());
