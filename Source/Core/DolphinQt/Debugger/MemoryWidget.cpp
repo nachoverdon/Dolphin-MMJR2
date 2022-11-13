@@ -97,10 +97,13 @@ void MemoryWidget::CreateWidgets()
   // Search
   auto* m_address_splitter = new QSplitter(Qt::Horizontal);
 
-  m_search_address = new QLineEdit;
+  m_search_address = new QComboBox;
+  m_search_address->setInsertPolicy(QComboBox::InsertAtTop);
+  m_search_address->setDuplicatesEnabled(false);
+  m_search_address->setEditable(true);
+  m_search_address->setMaxVisibleItems(8);
   m_search_offset = new QLineEdit;
 
-  m_search_address->setMaxLength(8);
   m_search_offset->setMaxLength(9);
   m_search_address->setPlaceholderText(tr("Search Address"));
   m_search_offset->setPlaceholderText(tr("Offset"));
@@ -243,17 +246,18 @@ void MemoryWidget::CreateWidgets()
   // Sidebar top menu
   QMenuBar* menubar = new QMenuBar(sidebar);
   menubar->setNativeMenuBar(false);
-  QMenu* menu_actions = new QMenu(tr("&Actions"));
 
-  menu_actions->addAction(tr("&Load file to current address"), this,
-                          &MemoryWidget::OnSetValueFromFile);
-  menu_actions->addSeparator();
-  menu_actions->addAction(tr("Dump &MRAM"), this, &MemoryWidget::OnDumpMRAM);
-  menu_actions->addAction(tr("Dump &ExRAM"), this, &MemoryWidget::OnDumpExRAM);
-  menu_actions->addAction(tr("Dump &ARAM"), this, &MemoryWidget::OnDumpARAM);
-  menu_actions->addAction(tr("Dump &FakeVMEM"), this, &MemoryWidget::OnDumpFakeVMEM);
+  QMenu* menu_import = new QMenu(tr("&Import"));
+  menu_import->addAction(tr("&Load file to current address"), this,
+                         &MemoryWidget::OnSetValueFromFile);
+  menubar->addMenu(menu_import);
 
-  menubar->addMenu(menu_actions);
+  QMenu* menu_export = new QMenu(tr("&Export"));
+  menu_export->addAction(tr("Dump &MRAM"), this, &MemoryWidget::OnDumpMRAM);
+  menu_export->addAction(tr("Dump &ExRAM"), this, &MemoryWidget::OnDumpExRAM);
+  menu_export->addAction(tr("Dump &ARAM"), this, &MemoryWidget::OnDumpARAM);
+  menu_export->addAction(tr("Dump &FakeVMEM"), this, &MemoryWidget::OnDumpFakeVMEM);
+  menubar->addMenu(menu_export);
 
   sidebar_layout->setSpacing(1);
   sidebar->setLayout(sidebar_layout);
@@ -297,7 +301,7 @@ void MemoryWidget::CreateWidgets()
 
 void MemoryWidget::ConnectWidgets()
 {
-  connect(m_search_address, &QLineEdit::textChanged, this, &MemoryWidget::OnSearchAddress);
+  connect(m_search_address, &QComboBox::currentTextChanged, this, &MemoryWidget::OnSearchAddress);
   connect(m_search_offset, &QLineEdit::textChanged, this, &MemoryWidget::OnSearchAddress);
   connect(m_data_edit, &QLineEdit::textChanged, this, &MemoryWidget::ValidateAndPreviewInputValue);
 
@@ -479,6 +483,28 @@ void MemoryWidget::OnBPTypeChanged()
 
 void MemoryWidget::SetAddress(u32 address)
 {
+  // Store current and target address in combo box
+  const QSignalBlocker blocker(m_search_address);
+  const QString current_text = m_search_address->currentText();
+  const QString target_addr = QString::number(address, 16);
+  bool good;
+  const u32 current_addr = current_text.toUInt(&good, 16);
+
+  if (good)
+  {
+    AddressSpace::Accessors* accessors =
+        AddressSpace::GetAccessors(m_memory_view->GetAddressSpace());
+    good = accessors->IsValidAddress(current_addr);
+  }
+
+  if (m_search_address->findText(current_text) == -1 && good)
+    m_search_address->insertItem(0, current_text);
+
+  if (m_search_address->findText(target_addr) == -1)
+    m_search_address->insertItem(0, target_addr);
+
+  m_search_address->setCurrentText(target_addr);
+
   m_memory_view->SetAddress(address);
   Settings::Instance().SetMemoryVisible(true);
   raise();
@@ -745,8 +771,8 @@ MemoryWidget::TargetAddress MemoryWidget::GetTargetAddress() const
   TargetAddress target;
 
   // Returns 0 if conversion fails
-  const u32 addr = m_search_address->text().toUInt(&target.is_good_address, 16);
-  target.is_good_address |= m_search_address->text().isEmpty();
+  const u32 addr = m_search_address->currentText().toUInt(&target.is_good_address, 16);
+  target.is_good_address |= m_search_address->currentText().isEmpty();
   const s32 offset = m_search_offset->text().toInt(&target.is_good_offset, 16);
   const u32 neg_offset = offset != std::numeric_limits<s32>::min() ?
                              -offset :
@@ -789,7 +815,7 @@ void MemoryWidget::FindValue(bool next)
     return;
   }
 
-  if (!m_search_address->text().isEmpty())
+  if (!m_search_address->currentText().isEmpty())
   {
     // skip the quoted address so we don't potentially refind the last result
     target_addr.address += next ? 1 : -1;
@@ -807,7 +833,7 @@ void MemoryWidget::FindValue(bool next)
 
     u32 offset = *found_addr;
 
-    m_search_address->setText(QStringLiteral("%1").arg(offset, 8, 16, QLatin1Char('0')));
+    m_search_address->setCurrentText(QStringLiteral("%1").arg(offset, 8, 16, QLatin1Char('0')));
     m_search_offset->clear();
 
     m_memory_view->SetAddress(offset);

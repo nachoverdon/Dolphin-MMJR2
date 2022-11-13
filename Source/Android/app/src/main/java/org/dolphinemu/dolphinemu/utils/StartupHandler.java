@@ -5,10 +5,10 @@ package org.dolphinemu.dolphinemu.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 import androidx.fragment.app.FragmentActivity;
+import androidx.preference.PreferenceManager;
 
 import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.NativeLibrary;

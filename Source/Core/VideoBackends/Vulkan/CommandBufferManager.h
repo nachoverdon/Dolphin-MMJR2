@@ -117,6 +117,7 @@ private:
     u64 fence_counter = 0;
     bool init_command_buffer_used = false;
     bool semaphore_used = false;
+    std::atomic<bool> waiting_for_submit{false};
     u32 frame_index = 0;
 
     std::vector<std::function<void()>> cleanup_resources;
@@ -160,7 +161,7 @@ private:
   Common::Flag m_last_present_failed;
   VkResult m_last_present_result = VK_SUCCESS;
   bool m_use_threaded_submission = false;
-  u32 m_descriptor_set_count = 0;
+  u32 m_descriptor_set_count = DESCRIPTOR_SETS_PER_POOL;
 };
 
 extern std::unique_ptr<CommandBufferManager> g_command_buffer_mgr;

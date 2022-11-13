@@ -1,8 +1,15 @@
-<SurfaceView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/surface_emulation"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_emulation"
     android:layout_height="match_parent"
-    android:layout_width="match_parent"
-    android:background="@color/dolphin_background"
-    android:focusable="false"
-    android:focusableInTouchMode="false"
-    />
+    android:layout_width="match_parent">
+	
+	<SurfaceView xmlns:android="http://schemas.android.com/apk/res/android"
+		android:id="@+id/surface_emulation"
+		android:layout_height="match_parent"
+		android:layout_width="match_parent"
+		android:background="@color/dolphin_background"
+		android:focusable="false"
+		android:focusableInTouchMode="false"/>
+
+</FrameLayout>
