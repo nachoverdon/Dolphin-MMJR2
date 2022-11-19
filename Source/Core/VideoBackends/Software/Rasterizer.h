@@ -10,13 +10,14 @@ struct OutputVertexData;
 namespace Rasterizer
 {
 void Init();
+void ScissorChanged();
 
 void UpdateZSlope(const OutputVertexData* v0, const OutputVertexData* v1,
-                  const OutputVertexData* v2);
+                  const OutputVertexData* v2, s32 x_off, s32 y_off);
 void DrawTriangleFrontFace(const OutputVertexData* v0, const OutputVertexData* v1,
                            const OutputVertexData* v2);
 
-void SetTevReg(int reg, int comp, s16 color);
+void SetTevKonstColors();
 
 struct RasterBlockPixel
 {

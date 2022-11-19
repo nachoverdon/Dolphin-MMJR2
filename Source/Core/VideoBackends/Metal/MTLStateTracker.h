@@ -17,6 +17,7 @@
 #include "VideoBackends/Metal/MTLTexture.h"
 #include "VideoBackends/Metal/MTLUtil.h"
 
+#include "VideoCommon/PerfQueryBase.h"
 #include "VideoCommon/RenderBase.h"
 
 namespace Metal
@@ -33,6 +34,7 @@ public:
     Uniform,
     Vertex,
     Index,
+    TextureData,
     Texels,
     Last = Texels
   };
@@ -46,6 +48,7 @@ public:
 
   enum class AlignMask : size_t
   {
+    None = 0,
     Other = 15,
     Uniform = 255,
   };
@@ -83,12 +86,14 @@ public:
   void InvalidateUniforms(bool vertex, bool fragment);
   void SetUtilityUniform(const void* buffer, size_t size);
   void SetTexelBuffer(id<MTLBuffer> buffer, u32 offset0, u32 offset1);
-  void SetVerticesAndIndices(Map vertices, Map indices);
+  void SetVerticesAndIndices(id<MTLBuffer> vertices, id<MTLBuffer> indices);
   void SetBBoxBuffer(id<MTLBuffer> bbox, id<MTLFence> upload, id<MTLFence> download);
   void SetVertexBufferNow(u32 idx, id<MTLBuffer> buffer, u32 offset);
   void SetFragmentBufferNow(u32 idx, id<MTLBuffer> buffer, u32 offset);
   /// Use around utility draws that are commonly used immediately before gx draws to the same buffer
   void EnableEncoderLabel(bool enabled) { m_flags.should_apply_label = enabled; }
+  void EnablePerfQuery(PerfQueryGroup group, u32 query_id);
+  void DisablePerfQuery();
   void UnbindTexture(id<MTLTexture> texture);
 
   void Draw(u32 base_vertex, u32 num_vertices);
@@ -101,13 +106,12 @@ public:
   {
     return (amt + static_cast<size_t>(align)) & ~static_cast<size_t>(align);
   }
-  Map AllocateForTextureUpload(size_t amt);
   Map Allocate(UploadBuffer buffer_idx, size_t amt, AlignMask align)
   {
     Preallocate(buffer_idx, amt);
     return CommitPreallocation(buffer_idx, amt, align);
   }
-  void* Preallocate(UploadBuffer buffer_idx, size_t amt);
+  std::pair<void*, size_t> Preallocate(UploadBuffer buffer_idx, size_t amt);
   /// Must follow a call to Preallocate where amt is >= to the one provided here
   Map CommitPreallocation(UploadBuffer buffer_idx, size_t amt, AlignMask align)
   {
@@ -115,7 +119,6 @@ public:
                   static_cast<size_t>(align)) == 0);
     return CommitPreallocation(buffer_idx, Align(amt, align));
   }
-  id<MTLBlitCommandEncoder> GetUploadEncoder();
   id<MTLBlitCommandEncoder> GetTextureUploadEncoder();
   id<MTLCommandBuffer> GetRenderCmdBuf();
 
@@ -139,26 +142,18 @@ private:
     void Reset(size_t new_size);
   };
 
-  struct CPUBuffer
+  struct Buffer
   {
     UsageTracker usage;
     MRCOwned<id<MTLBuffer>> mtlbuffer;
     void* buffer = nullptr;
   };
 
-  struct BufferPair
-  {
-    UsageTracker usage;
-    MRCOwned<id<MTLBuffer>> cpubuffer;
-    MRCOwned<id<MTLBuffer>> gpubuffer;
-    void* buffer = nullptr;
-    size_t last_upload = 0;
-  };
-
   struct Backref;
+  struct PerfQueryTracker;
 
   std::shared_ptr<Backref> m_backref;
-  MRCOwned<id<MTLFence>> m_fence;
+  std::vector<std::shared_ptr<PerfQueryTracker>> m_perf_query_tracker_cache;
   MRCOwned<id<MTLCommandBuffer>> m_upload_cmdbuf;
   MRCOwned<id<MTLBlitCommandEncoder>> m_upload_encoder;
   MRCOwned<id<MTLCommandBuffer>> m_texture_upload_cmdbuf;
@@ -170,8 +165,7 @@ private:
   MRCOwned<MTLRenderPassDescriptor*> m_render_pass_desc[3];
   MRCOwned<MTLRenderPassDescriptor*> m_resolve_pass_desc;
   Framebuffer* m_current_framebuffer;
-  CPUBuffer m_texture_upload_buffer;
-  BufferPair m_upload_buffers[static_cast<int>(UploadBuffer::Last) + 1];
+  Buffer m_upload_buffers[static_cast<int>(UploadBuffer::Last) + 1];
   u64 m_current_draw = 1;
   std::atomic<u64> m_last_finished_draw{0};
 
@@ -223,7 +217,9 @@ private:
     MTLDepthClipMode depth_clip_mode;
     MTLCullMode cull_mode;
     DepthStencilSelector depth_stencil;
+    PerfQueryGroup perf_query_group;
   } m_current;
+  std::shared_ptr<PerfQueryTracker> m_current_perf_query;
 
   /// Things that represent what we'd *like* to have on the encoder for the next draw
   struct State
@@ -247,14 +243,15 @@ private:
     id<MTLBuffer> vertices = nullptr;
     id<MTLBuffer> indices = nullptr;
     id<MTLBuffer> texels = nullptr;
-    u32 vertices_offset;
-    u32 indices_offset;
     u32 texel_buffer_offset0;
     u32 texel_buffer_offset1;
+    PerfQueryGroup perf_query_group = static_cast<PerfQueryGroup>(-1);
   } m_state;
 
+  u32 m_perf_query_tracker_counter = 0;
+
+  std::shared_ptr<PerfQueryTracker> NewPerfQueryTracker();
   void SetSamplerForce(u32 idx, const SamplerState& sampler);
-  void Sync(BufferPair& buffer);
   Map CommitPreallocation(UploadBuffer buffer_idx, size_t actual_amt);
   void CheckViewport();
   void CheckScissor();

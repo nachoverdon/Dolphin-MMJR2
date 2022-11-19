@@ -10,8 +10,12 @@
 
 #include "VideoCommon/RenderState.h"
 
+struct AbstractPipelineConfig;
+class AbstractPipeline;
+
 namespace Metal
 {
+class Shader;
 extern MRCOwned<id<MTLDevice>> g_device;
 extern MRCOwned<id<MTLCommandQueue>> g_queue;
 
@@ -76,13 +80,24 @@ public:
 
   id<MTLDepthStencilState> GetDepthStencil(DepthStencilSelector sel) { return m_dss[sel.value]; }
 
-  id<MTLSamplerState> GetSampler(SamplerSelector sel) { return m_samplers[sel.value]; }
+  id<MTLSamplerState> GetSampler(SamplerSelector sel)
+  {
+    if (__builtin_expect(!m_samplers[sel.value], false))
+      m_samplers[sel.value] = CreateSampler(sel);
+    return m_samplers[sel.value];
+  }
 
   id<MTLSamplerState> GetSampler(SamplerState state) { return GetSampler(SamplerSelector(state)); }
 
   void ReloadSamplers();
 
+  std::unique_ptr<AbstractPipeline> CreatePipeline(const AbstractPipelineConfig& config);
+  void ShaderDestroyed(const Shader* shader);
+
 private:
+  class Internal;
+  std::unique_ptr<Internal> m_internal;
+  MRCOwned<id<MTLSamplerState>> CreateSampler(SamplerSelector sel);
   MRCOwned<id<MTLDepthStencilState>> m_dss[DepthStencilSelector::N_VALUES];
   MRCOwned<id<MTLSamplerState>> m_samplers[SamplerSelector::N_VALUES];
 };

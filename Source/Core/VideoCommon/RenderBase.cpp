@@ -189,8 +189,7 @@ void Renderer::EndUtilityDrawing()
 {
   // Reset framebuffer/scissor/viewport. Pipeline will be reset at next draw.
   g_framebuffer_manager->BindEFBFramebuffer();
-  BPFunctions::SetScissor();
-  BPFunctions::SetViewport();
+  BPFunctions::SetScissorAndViewport();
 }
 
 void Renderer::SetFramebuffer(AbstractFramebuffer* framebuffer)
@@ -589,8 +588,7 @@ void Renderer::CheckForConfigChanges()
   // Viewport and scissor rect have to be reset since they will be scaled differently.
   if (changed_bits & CONFIG_CHANGE_BIT_TARGET_SIZE)
   {
-    BPFunctions::SetViewport();
-    BPFunctions::SetScissor();
+    BPFunctions::SetScissorAndViewport();
   }
 
   // Stereo mode change requires recompiling our post processing pipeline and imgui pipelines for
@@ -608,11 +606,10 @@ void Renderer::DrawDebugText()
   if (g_ActiveConfig.bShowFPS)
   {
     // Position in the top-left corner of the screen.
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - (20.0f * m_backbuffer_scale),
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - (10.0f * m_backbuffer_scale),
                                    5.0f * m_backbuffer_scale),
-                            ImGuiCond_Always, ImVec2(9.5f, 0.0f));
-    ImGui::SetNextWindowSize(ImVec2(.0f, 28.f * m_backbuffer_scale));
-    ImGui::SetNextWindowBgAlpha(.6f);
+                            ImGuiCond_Always, ImVec2(5.1f, 0.0f));
+    ImGui::SetNextWindowSize(ImVec2(165.0f * m_backbuffer_scale, 28.0f * m_backbuffer_scale));
 
     if (ImGui::Begin("FPS", nullptr,
                      ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs |
@@ -676,6 +673,9 @@ void Renderer::DrawDebugText()
 
   if (g_ActiveConfig.bOverlayProjStats)
     g_stats.DisplayProj();
+
+  if (g_ActiveConfig.bOverlayScissorStats)
+    g_stats.DisplayScissor();
 
   const std::string profile_output = Common::Profiler::ToString();
   if (!profile_output.empty())
@@ -1025,6 +1025,11 @@ void Renderer::RecordVideoMemory()
 
 bool Renderer::InitializeImGui()
 {
+  if (!IMGUI_CHECKVERSION())
+  {
+    PanicAlertFmt("ImGui version check failed");
+    return false;
+  }
   if (!ImGui::CreateContext())
   {
     PanicAlertFmt("Creating ImGui context failed");
@@ -1037,6 +1042,7 @@ bool Renderer::InitializeImGui()
   ImGui::GetIO().DisplayFramebufferScale.y = m_backbuffer_scale;
   ImGui::GetIO().FontGlobalScale = m_backbuffer_scale;
   ImGui::GetStyle().ScaleAllSizes(m_backbuffer_scale);
+  ImGui::GetStyle().WindowRounding = 7.0f;
 
   PortableVertexDeclaration vdecl = {};
   vdecl.position = {ComponentFormat::Float, 2, offsetof(ImDrawVert, pos), true, false};
@@ -1148,8 +1154,7 @@ void Renderer::ShutdownImGui()
 
 void Renderer::BeginImGuiFrame()
 {
-  std::unique_lock<std::mutex> imgui_lock(m_imgui_mutex);
-
+  std::unique_lock<std::mutex> imgui_lock(m_imgui_mutex);			 
   const u64 current_time_us = Common::Timer::NowUs();
   const u64 time_diff_us = current_time_us - m_imgui_last_frame_time;
   const float time_diff_secs = static_cast<float>(time_diff_us / 1000000.0);

@@ -50,55 +50,6 @@ static Common::Matrix44 s_viewportCorrection;
 VertexShaderConstants VertexShaderManager::constants;
 bool VertexShaderManager::dirty;
 
-// Viewport correction:
-// In D3D, the viewport rectangle must fit within the render target.
-// Say you want a viewport at (ix, iy) with size (iw, ih),
-// but your viewport must be clamped at (ax, ay) with size (aw, ah).
-// Just multiply the projection matrix with the following to get the same
-// effect:
-// [   (iw/aw)         0     0    ((iw - 2*(ax-ix)) / aw - 1)   ]
-// [         0   (ih/ah)     0   ((-ih + 2*(ay-iy)) / ah + 1)   ]
-// [         0         0     1                              0   ]
-// [         0         0     0                              1   ]
-static void ViewportCorrectionMatrix(Common::Matrix44& result)
-{
-  int scissorXOff = bpmem.scissorOffset.x * 2;
-  int scissorYOff = bpmem.scissorOffset.y * 2;
-
-  // TODO: ceil, floor or just cast to int?
-  // TODO: Directly use the floats instead of rounding them?
-  float intendedX = xfmem.viewport.xOrig - xfmem.viewport.wd - scissorXOff;
-  float intendedY = xfmem.viewport.yOrig + xfmem.viewport.ht - scissorYOff;
-  float intendedWd = 2.0f * xfmem.viewport.wd;
-  float intendedHt = -2.0f * xfmem.viewport.ht;
-
-  if (intendedWd < 0.f)
-  {
-    intendedX += intendedWd;
-    intendedWd = -intendedWd;
-  }
-  if (intendedHt < 0.f)
-  {
-    intendedY += intendedHt;
-    intendedHt = -intendedHt;
-  }
-
-  // fit to EFB size
-  float X = (intendedX >= 0.f) ? intendedX : 0.f;
-  float Y = (intendedY >= 0.f) ? intendedY : 0.f;
-  float Wd = (X + intendedWd <= EFB_WIDTH) ? intendedWd : (EFB_WIDTH - X);
-  float Ht = (Y + intendedHt <= EFB_HEIGHT) ? intendedHt : (EFB_HEIGHT - Y);
-
-  result = Common::Matrix44::Identity();
-  if (Wd == 0 || Ht == 0)
-    return;
-
-  result.data[4 * 0 + 0] = intendedWd / Wd;
-  result.data[4 * 0 + 3] = (intendedWd - 2.f * (X - intendedX)) / Wd - 1.f;
-  result.data[4 * 1 + 1] = intendedHt / Ht;
-  result.data[4 * 1 + 3] = (-intendedHt + 2.f * (Y - intendedY)) / Ht + 1.f;
-}
-
 void VertexShaderManager::Init()
 {
   // Initialize state tracking variables
@@ -357,14 +308,8 @@ void VertexShaderManager::SetConstants(const std::vector<std::string>& textures)
     }
 
     dirty = true;
-    BPFunctions::SetViewport();
-
-    // Update projection if the viewport isn't 1:1 useable
-    if (!g_ActiveConfig.backend_info.bSupportsOversizedViewports)
-    {
-      ViewportCorrectionMatrix(s_viewportCorrection);
-      bProjectionChanged = true;
-    }
+    BPFunctions::SetScissorAndViewport();
+	g_stats.AddScissorRect();
   }
 
   std::vector<GraphicsModAction*> projection_actions;
@@ -661,13 +606,42 @@ void VertexShaderManager::SetMaterialColorChanged(int index)
   nMaterialsChanged[index] = true;
 }
 
-void VertexShaderManager::SetVertexFormat(u32 components)
+static void UpdateValue(bool* dirty, u32* old_value, u32 new_value)
 {
-  if (components != constants.components)
-  {
-    constants.components = components;
-    dirty = true;
-  }
+  if (*old_value == new_value)
+    return;
+  *old_value = new_value;
+  *dirty = true;
+}
+
+static void UpdateOffset(bool* dirty, bool include_components, u32* old_value,
+                         const AttributeFormat& attribute)
+{
+  if (!attribute.enable)
+    return;
+  u32 new_value = attribute.offset / 4;  // GPU uses uint offsets
+  if (include_components)
+    new_value |= attribute.components << 16;
+  UpdateValue(dirty, old_value, new_value);
+}
+
+template <size_t N>
+static void UpdateOffsets(bool* dirty, bool include_components, std::array<u32, N>* old_value,
+                          const std::array<AttributeFormat, N>& attribute)
+{
+  for (size_t i = 0; i < N; i++)
+    UpdateOffset(dirty, include_components, &(*old_value)[i], attribute[i]);
+}
+
+void VertexShaderManager::SetVertexFormat(u32 components, const PortableVertexDeclaration& format)
+{
+  UpdateValue(&dirty, &constants.components, components);
+  UpdateValue(&dirty, &constants.vertex_stride, format.stride / 4);
+  UpdateOffset(&dirty, true, &constants.vertex_offset_position, format.position);
+  UpdateOffset(&dirty, false, &constants.vertex_offset_posmtx, format.posmtx);
+  UpdateOffsets(&dirty, true, &constants.vertex_offset_texcoords, format.texcoords);
+  UpdateOffsets(&dirty, false, &constants.vertex_offset_colors, format.colors);
+  UpdateOffsets(&dirty, false, &constants.vertex_offset_normals, format.normals);
 }
 
 void VertexShaderManager::SetTexMatrixInfoChanged(int index)

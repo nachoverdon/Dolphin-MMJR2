@@ -67,7 +67,6 @@ void VideoSoftware::InitBackendInfo()
   g_Config.backend_info.bSupports3DVision = false;
   g_Config.backend_info.bSupportsDualSourceBlend = true;
   g_Config.backend_info.bSupportsEarlyZ = true;
-  g_Config.backend_info.bSupportsOversizedViewports = true;
   g_Config.backend_info.bSupportsPrimitiveRestart = false;
   g_Config.backend_info.bSupportsMultithreading = false;
   g_Config.backend_info.bSupportsComputeShaders = false;
@@ -89,6 +88,7 @@ void VideoSoftware::InitBackendInfo()
   g_Config.backend_info.bSupportsLodBiasInSampler = false;
   g_Config.backend_info.bSupportsSettingObjectNames = false;
   g_Config.backend_info.bSupportsPartialMultisampleResolve = true;
+  g_Config.backend_info.bSupportsDynamicVertexLoader = false;
 
   // aamodes
   g_Config.backend_info.AAModes = {1};
