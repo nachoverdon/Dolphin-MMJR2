@@ -502,6 +502,7 @@ void Renderer::CheckForConfigChanges()
 
   UpdateActiveConfig();
   FreeLook::UpdateActiveConfig();
+  g_vertex_manager->OnConfigChange();
 
   g_freelook_camera.SetControlType(FreeLook::GetActiveConfig().camera_config.control_type);
 
@@ -607,9 +608,10 @@ void Renderer::DrawDebugText()
   {
     // Position in the top-left corner of the screen.
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - (10.0f * m_backbuffer_scale),
-                                   5.0f * m_backbuffer_scale),
-                            ImGuiCond_Always, ImVec2(5.1f, 0.0f));
+                                   10.0f * m_backbuffer_scale),
+                            ImGuiCond_Always, ImVec2(5.0f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(165.0f * m_backbuffer_scale, 28.0f * m_backbuffer_scale));
+	ImGui::SetNextWindowBgAlpha(.6f);
 
     if (ImGui::Begin("FPS", nullptr,
                      ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs |
@@ -1361,6 +1363,8 @@ void Renderer::Swap(u32 xfb_addr, u32 fb_width, u32 fb_stride, u32 fb_height, u6
   {
     m_graphics_mod_manager.EndOfFrame();
   }
+
+  g_framebuffer_manager->EndOfFrame();
 
   if (xfb_addr && fb_width && fb_stride && fb_height)
   {

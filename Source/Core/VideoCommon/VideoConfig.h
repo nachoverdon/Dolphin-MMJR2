@@ -45,6 +45,13 @@ enum class ShaderCompilationMode : int
   AsynchronousSkipRendering
 };
 
+enum class TriState : int
+{
+  Off,
+  On,
+  Auto
+};
+
 // NEVER inherit from this class.
 struct VideoConfig final
 {
@@ -108,6 +115,7 @@ struct VideoConfig final
   bool bInternalResolutionFrameDumps = false;
   bool bBorderlessFullscreen = false;
   bool bEnableGPUTextureDecoding = false;
+  bool bPreferVSForLinePointExpansion = false;
   int iBitrateKbps = 0;
   bool bGraphicMods = false;
   std::optional<GraphicsModGroupConfig> graphics_mod_config;
@@ -150,6 +158,10 @@ struct VideoConfig final
   // D3D only config, mostly to be merged into the above
   int iAdapter = 0;
 
+  // Metal only config
+  TriState iManuallyUploadBuffers = TriState::Auto;
+  bool bUsePresentDrawable = false;
+
   // Enable API validation layers, currently only supported with Vulkan.
   bool bEnableValidationLayer = false;
 
@@ -175,6 +187,7 @@ struct VideoConfig final
   struct
   {
     APIType api_type = APIType::Nothing;
+    std::string DisplayName;
 
     std::vector<std::string> Adapters;  // for D3D
     std::vector<u32> AAModes;
@@ -224,9 +237,18 @@ struct VideoConfig final
     bool bSupportsSettingObjectNames = false;
     bool bSupportsPartialMultisampleResolve = false;
     bool bSupportsDynamicVertexLoader = false;
+    bool bSupportsVSLinePointExpand = false;
   } backend_info;
 
   // Utility
+  bool UseVSForLinePointExpand() const
+  {
+    if (!backend_info.bSupportsVSLinePointExpand)
+      return false;
+    if (!backend_info.bSupportsGeometryShaders)
+      return true;
+    return bPreferVSForLinePointExpansion;
+  }
   bool MultisamplingEnabled() const { return iMultisamples > 1; }
   bool ExclusiveFullscreenEnabled() const
   {

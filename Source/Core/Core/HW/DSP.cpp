@@ -164,9 +164,9 @@ void DoState(PointerWrap& p)
 
   if (!state.aram.wii_mode)
     p.DoArray(state.aram.ptr, state.aram.size);
-  p.DoPOD(state.dsp_control);
-  p.DoPOD(state.audio_dma);
-  p.DoPOD(state.aram_dma);
+  p.Do(state.dsp_control);
+  p.Do(state.audio_dma);
+  p.Do(state.aram_dma);
   p.Do(state.aram_info);
   p.Do(state.aram_mode);
   p.Do(state.aram_refresh);
@@ -418,7 +418,7 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
         bool already_enabled = state.audio_dma.AudioDMAControl.Enable;
         state.audio_dma.AudioDMAControl.Hex = val;
 
-        // Only load new values if were not already doing a DMA transfer,
+        // Only load new values if we're not already doing a DMA transfer,
         // otherwise just let the new values be autoloaded in when the
         // current transfer ends.
         if (!already_enabled && state.audio_dma.AudioDMAControl.Enable)
@@ -428,10 +428,6 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
 
           INFO_LOG_FMT(AUDIO_INTERFACE, "Audio DMA configured: {} blocks from {:#010x}",
                        state.audio_dma.AudioDMAControl.NumBlocks, state.audio_dma.SourceAddress);
-
-          // We make the samples ready as soon as possible
-          void* address = Memory::GetPointer(state.audio_dma.SourceAddress);
-          AudioCommon::SendAIBuffer((short*)address, state.audio_dma.AudioDMAControl.NumBlocks * 8);
 
           // TODO: need hardware tests for the timing of this interrupt.
           // Sky Crawlers crashes at boot if this is scheduled less than 87 cycles in the future.
@@ -453,7 +449,7 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
                  MMIO::InvalidWrite<u16>());
 
   // 32 bit reads/writes are a combination of two 16 bit accesses.
-  for (int i = 0; i < 0x1000; i += 4)
+  for (u32 i = 0; i < 0x1000; i += 4)
   {
     mmio->Register(base | i, MMIO::ReadToSmaller<u32>(mmio, base | i, base | (i + 2)),
                    MMIO::WriteToSmaller<u32>(mmio, base | i, base | (i + 2)));
@@ -524,6 +520,8 @@ void UpdateAudioDMA()
     // Read audio at g_audioDMA.current_source_address in RAM and push onto an
     // external audio fifo in the emulator, to be mixed with the disc
     // streaming output.
+    void* address = Memory::GetPointer(state.audio_dma.current_source_address);
+    AudioCommon::SendAIBuffer(reinterpret_cast<short*>(address), 8);
 
     if (state.audio_dma.remaining_blocks_count != 0)
     {
@@ -536,12 +534,6 @@ void UpdateAudioDMA()
       state.audio_dma.current_source_address = state.audio_dma.SourceAddress;
       state.audio_dma.remaining_blocks_count = state.audio_dma.AudioDMAControl.NumBlocks;
 
-      if (state.audio_dma.remaining_blocks_count != 0)
-      {
-        // We make the samples ready as soon as possible
-        void* address = Memory::GetPointer(state.audio_dma.SourceAddress);
-        AudioCommon::SendAIBuffer((short*)address, state.audio_dma.AudioDMAControl.NumBlocks * 8);
-      }
       GenerateDSPInterrupt(DSP::INT_AID);
     }
   }
