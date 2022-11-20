@@ -1243,6 +1243,13 @@ TextureCacheBase::TCacheEntry* TextureCacheBase::Load(const TextureInfo& texture
   if (entry->texture_info_name.empty() && g_ActiveConfig.bGraphicMods)
   {
     entry->texture_info_name = texture_info.CalculateTextureName().GetFullName();
+
+    GraphicsModActionData::TextureLoad texture_load{entry->texture_info_name};
+    for (const auto action :
+         g_renderer->GetGraphicsModManager().GetTextureLoadActions(entry->texture_info_name))
+    {
+      action->OnTextureLoad(&texture_load);
+    }
   }
   bound_textures[texture_info.GetStage()] = entry;
 
@@ -1537,8 +1544,15 @@ TextureCacheBase::GetTexture(const int textureCacheSafetyColorSampleSize,
     }
   }
 
+#ifdef __APPLE__
+  const bool no_mips = g_ActiveConfig.bNoMipmapping;
+#else
+  const bool no_mips = false;
+#endif
   // how many levels the allocated texture shall have
-  const u32 texLevels = hires_tex ? (u32)hires_tex->m_levels.size() : texture_info.GetLevelCount();
+  const u32 texLevels = no_mips   ? 1 :
+                        hires_tex ? (u32)hires_tex->m_levels.size() :
+                                    texture_info.GetLevelCount();
 
   // We can decode on the GPU if it is a supported format and the flag is enabled.
   // Currently we don't decode RGBA8 textures from TMEM, as that would require copying from both
