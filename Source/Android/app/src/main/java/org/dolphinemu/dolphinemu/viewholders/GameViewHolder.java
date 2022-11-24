@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.model.GameFile;
 
+import java.util.concurrent.CountedCompleter;
+
 /**
  * A simple class that stores references to views so that the GameAdapter doesn't need to
  * keep calling findViewById(), which is expensive.
@@ -25,7 +27,7 @@ public class GameViewHolder extends RecyclerView.ViewHolder
 
   public GameFile gameFile;
 
-  public GameViewHolder(View itemView)
+    public GameViewHolder(View itemView)
   {
     super(itemView);
 

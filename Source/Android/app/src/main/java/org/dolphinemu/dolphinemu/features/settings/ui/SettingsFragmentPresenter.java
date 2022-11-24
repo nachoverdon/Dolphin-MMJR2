@@ -486,10 +486,10 @@ public final class SettingsFragmentPresenter
     sl.add(new FilePicker(mContext, StringSetting.MAIN_WII_SD_CARD_SYNC_FOLDER_PATH,
             R.string.wii_sd_sync_folder, 0, MainPresenter.REQUEST_DIRECTORY, "/Load/WiiSDSync/"));
     sl.add(new RunRunnable(mContext, R.string.wii_sd_card_folder_to_file, 0,
-            R.string.wii_sd_card_folder_to_file_confirmation, 0,
+            R.string.wii_sd_card_folder_to_file_confirmation, 0, false,
             () -> convertOnThread(WiiUtils::syncSdFolderToSdImage)));
     sl.add(new RunRunnable(mContext, R.string.wii_sd_card_file_to_folder, 0,
-            R.string.wii_sd_card_file_to_folder_confirmation, 0,
+            R.string.wii_sd_card_file_to_folder_confirmation, 0, false,
             () -> convertOnThread(WiiUtils::syncSdImageToSdFolder)));
 	sl.add(new HeaderSetting(mContext, R.string.wii_wiimote_settings, 0));
     sl.add(new CheckBoxSetting(mContext, BooleanSetting.SYSCONF_WIIMOTE_MOTOR,
@@ -829,11 +829,11 @@ public final class SettingsFragmentPresenter
     sl.add(new SingleChoiceSetting(mContext, IntSetting.LOGGER_VERBOSITY, R.string.log_verbosity, 0,
             getLogVerbosityEntries(), getLogVerbosityValues()));
     sl.add(new RunRunnable(mContext, R.string.log_enable_all, 0,
-            R.string.log_enable_all_confirmation, 0, () -> setAllLogTypes(true)));
+            R.string.log_enable_all_confirmation, 0, true, () -> setAllLogTypes(true)));
     sl.add(new RunRunnable(mContext, R.string.log_disable_all, 0,
-            R.string.log_disable_all_confirmation, 0, () -> setAllLogTypes(false)));
+            R.string.log_disable_all_confirmation, 0, true, () -> setAllLogTypes(false)));
     sl.add(new RunRunnable(mContext, R.string.log_clear, 0, R.string.log_clear_confirmation, 0,
-            SettingsAdapter::clearLog));
+            true, SettingsAdapter::clearLog));
 
     sl.add(new HeaderSetting(mContext, R.string.log_types, 0));
     for (Map.Entry<String, String> entry : LOG_TYPE_NAMES.entrySet())
