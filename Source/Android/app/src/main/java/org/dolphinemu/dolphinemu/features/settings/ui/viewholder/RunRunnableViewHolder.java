@@ -50,6 +50,12 @@ public final class RunRunnableViewHolder extends SettingViewHolder
   @Override
   public void onClick(View clicked)
   {
+    if (!mItem.isEditable())
+    {
+      showNotRuntimeEditableError();
+      return;
+    }
+
     int alertTextID = mItem.getAlertText();
 
     if (alertTextID > 0)
