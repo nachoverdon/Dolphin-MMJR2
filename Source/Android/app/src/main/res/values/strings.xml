@@ -136,7 +136,9 @@
     <string name="gamecube_submenu">GameCube</string>
     <string name="system_language">System Language</string>
     <string name="skip_ipl">Skip IPL</string>
-    <string name="skip_ipl_description">Skip BIOS</string>
+    <string name="skip_ipl_description">"Skips BIOS.
+Requires an ipl.bin file of the correct region to be placed in /mmjr-revamp/GC/REGION/ if unchecked.
+Without the correct bios file, the app may crash due to a bug that I can not fix atm"</string>
     <string name="slot_a_device">GameCube Slot A Device</string>
     <string name="slot_b_device">GameCube Slot B Device</string>
 	<string name="serial_port_1_device">GameCube Serial Port 1 Device</string>
