@@ -4,10 +4,11 @@ If you want scoped storage, go use Dolphin Official Builds. I have no use for sc
 
 An Android-only performance-focused dolphin fork, rebased on top of latest dolphin development builds and reimplementing MMJ UX and performance improvements, plus adding our own.
 
-Grab the latest build in the [releases](https://github.com/Lumince/Dolphin-MMJR2/releases) section, or check for new version in the in-app updater. Old MMJR v1.0 builds can be found at the old repository [here](https://github.com/Bankaimaster999/dolphin/releases). 1.0 and 2.0 builds can be installed without conflicts as they use different folders, but **savestates are not compatible**. We kindly ask you to avoid misusing GitHub Issues and Pull Requests.
+Grab the latest build in the [releases](https://github.com/Lumince/Dolphin-MMJR2/releases) section, or check for new version in the in-app updater. Old MMJR v1.0 builds can be found at the old repository [here](https://github.com/Bankaimaster999/Dolphin-MMJR/releases). 1.0 and 2.0 builds can be installed without conflicts as they use different folders, but **savestates are not compatible**. We kindly ask you to avoid misusing GitHub Issues and Pull Requests.
 
 This fork wouldn't be possible without the crazy amount of work that developers much more skilled than us put into Dolphin.
-
+# New Discord Server
+Join [here](https://discord.gg/NQ9jH8cUeZ)
 
 ## Dolphin - A GameCube and Wii Emulator
 
@@ -123,12 +124,23 @@ List of user folders:
 * `Config`: configuration files
 * `Dump`: anything dumped from Dolphin
 * `GameSettings`: additional settings to be applied per-game
+* `GBA`: GBA saves
 * `GC`: memory cards and system BIOS
-* `Load`: custom textures, graphicmods, riivolution patches, wiisdsync
+* `Load`: graphicmods, riivolution patches, custom textures, wiisdsync, wiiSD
 * `Logs`: logs, if enabled
 * `ScreenShots`: screenshots taken via Dolphin
 * `StateSaves`: save states
 * `Wii`: Wii NAND contents
+
+## GraphicMods
+
+GraphicMods have to be placed in the user directory under
+`Load/GraphicMods/[GameID]/`. Once you have extracted the graphic mods here, you will need to enable them in settings `Settings > Graphics > Advanced > Graphic Mods`
+
+## Riivolution Patches
+
+Riivolution Patches have to be placed in the user directory under
+`Load/Riivolution/[GameID]/`. Once you have extracted the patches here, long press on the game and select `Start with Riivolution Patches`
 
 ## Custom Textures
 
@@ -136,12 +148,5 @@ Custom textures have to be placed in the user directory under
 `Load/Textures/[GameID]/`. You can find the Game ID by right-clicking a game
 in the ISO list and selecting "ISO Properties".
 
-## Riivolution Patches
 
-Riivolution Patches have to be placed in the user directory under
-`Load/Riivolution/[GameID]/`. Once you have extracted the patches here, long press on the game and select `Start with Riivolution Patches`
 
-## GraphicMods
-
-GraphicMods have to be placed in the user directory under
-`Load/GraphicMods/[GameID]/`. Once you have extracted the graphic mods here, you will need to enable them in settings `Settings > Graphics > Advanced > Graphic Mods`
