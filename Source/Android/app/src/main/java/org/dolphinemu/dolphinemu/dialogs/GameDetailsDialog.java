@@ -5,17 +5,16 @@ package org.dolphinemu.dolphinemu.dialogs;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
 import org.dolphinemu.dolphinemu.NativeLibrary;
 import org.dolphinemu.dolphinemu.R;
+import org.dolphinemu.dolphinemu.databinding.DialogGameDetailsBinding;
 import org.dolphinemu.dolphinemu.model.GameFile;
-import org.dolphinemu.dolphinemu.model.GameFileCache;
 import org.dolphinemu.dolphinemu.services.GameFileCacheManager;
 import org.dolphinemu.dolphinemu.utils.GlideUtils;
 
@@ -34,99 +33,81 @@ public final class GameDetailsDialog extends DialogFragment
     return fragment;
   }
 
+  @NonNull
   @Override
   public Dialog onCreateDialog(Bundle savedInstanceState)
   {
     GameFile gameFile = GameFileCacheManager.addOrGet(getArguments().getString(ARG_GAME_PATH));
 
     AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-    ViewGroup contents = (ViewGroup) getActivity().getLayoutInflater()
-            .inflate(R.layout.dialog_game_details, null);
-
-    ImageView banner = contents.findViewById(R.id.banner);
-
-    TextView textTitle = contents.findViewById(R.id.text_game_title);
-    TextView textDescription = contents.findViewById(R.id.text_description);
-
-    TextView textCountry = contents.findViewById(R.id.text_country);
-    TextView textCompany = contents.findViewById(R.id.text_company);
-    TextView textGameId = contents.findViewById(R.id.text_game_id);
-    TextView textRevision = contents.findViewById(R.id.text_revision);
-
-    TextView textFileFormat = contents.findViewById(R.id.text_file_format);
-    TextView textCompression = contents.findViewById(R.id.text_compression);
-    TextView textBlockSize = contents.findViewById(R.id.text_block_size);
-
-    TextView labelFileFormat = contents.findViewById(R.id.label_file_format);
-    TextView labelCompression = contents.findViewById(R.id.label_compression);
-    TextView labelBlockSize = contents.findViewById(R.id.label_block_size);
+    DialogGameDetailsBinding binding = DialogGameDetailsBinding.inflate(getLayoutInflater());
 
     String country = getResources().getStringArray(R.array.countryNames)[gameFile.getCountry()];
     String description = gameFile.getDescription();
     String fileSize = NativeLibrary.FormatSize(gameFile.getFileSize(), 2);
 
     // Save File Location Quoted in GameDetails
-    String gamePath = "/mmjr-revamp/GC/" + country + "\n/Card A/" + gameFile.getGameId();
+    String gamePath = "/mmjr-revamp/GC/" + country + "\n/Card A/"/* + gameFile.getGameId()*/;
     if(gameFile.getPlatform() > 0)
     {
       gamePath = gameFile.getWiiSavePath();
     }
-    TextView textGameFilename = contents.findViewById(R.id.save_folder_location);
+    TextView textGameFilename = binding.saveFolderLocation;
     textGameFilename.setText(gamePath);
 
-    textTitle.setText(gameFile.getTitle());
-    textDescription.setText(gameFile.getDescription());
+    binding.textGameTitle.setText(gameFile.getTitle());
+    binding.textDescription.setText(gameFile.getDescription());
     if (description.isEmpty())
     {
-      textDescription.setVisibility(View.GONE);
+      binding.textDescription.setVisibility(View.GONE);
     }
 
-    textCountry.setText(country);
-    textCompany.setText(gameFile.getCompany());
-    textGameId.setText(gameFile.getGameId());
-    textRevision.setText(String.valueOf(gameFile.getRevision()));
+    binding.textCountry.setText(country);
+    binding.textCompany.setText(gameFile.getCompany());
+    binding.textGameId.setText(gameFile.getGameId());
+    binding.textRevision.setText(String.valueOf(gameFile.getRevision()));
 
     if (!gameFile.shouldShowFileFormatDetails())
     {
-      labelFileFormat.setText(R.string.game_details_file_size);
-      textFileFormat.setText(fileSize);
+      binding.labelFileFormat.setText(R.string.game_details_file_size);
+      binding.textFileFormat.setText(fileSize);
 
-      labelCompression.setVisibility(View.GONE);
-      textCompression.setVisibility(View.GONE);
-      labelBlockSize.setVisibility(View.GONE);
-      textBlockSize.setVisibility(View.GONE);
+      binding.labelCompression.setVisibility(View.GONE);
+      binding.textCompression.setVisibility(View.GONE);
+      binding.labelBlockSize.setVisibility(View.GONE);
+      binding.textBlockSize.setVisibility(View.GONE);
     }
     else
     {
       long blockSize = gameFile.getBlockSize();
       String compression = gameFile.getCompressionMethod();
 
-      textFileFormat.setText(getResources().getString(R.string.game_details_size_and_format,
+      binding.textFileFormat.setText(getResources().getString(R.string.game_details_size_and_format,
               gameFile.getFileFormatName(), fileSize));
 
       if (compression.isEmpty())
       {
-        textCompression.setText(R.string.game_details_no_compression);
+        binding.textCompression.setText(R.string.game_details_no_compression);
       }
       else
       {
-        textCompression.setText(gameFile.getCompressionMethod());
+        binding.textCompression.setText(gameFile.getCompressionMethod());
       }
 
       if (blockSize > 0)
       {
-        textBlockSize.setText(NativeLibrary.FormatSize(blockSize, 0));
+        binding.textBlockSize.setText(NativeLibrary.FormatSize(blockSize, 0));
       }
       else
       {
-        labelBlockSize.setVisibility(View.GONE);
-        textBlockSize.setVisibility(View.GONE);
+        binding.labelBlockSize.setVisibility(View.GONE);
+        binding.textBlockSize.setVisibility(View.GONE);
       }
     }
 
-    GlideUtils.loadGameBanner(banner, gameFile);
+    GlideUtils.loadGameBanner(binding.banner, gameFile);
 
-    builder.setView(contents);
+    builder.setView(binding.getRoot());
     return builder.create();
   }
 }

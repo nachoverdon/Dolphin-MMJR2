@@ -2,14 +2,11 @@
 
 package org.dolphinemu.dolphinemu.features.settings.ui.viewholder;
 
-import android.text.TextUtils;
 import android.view.View;
-import android.widget.CheckBox;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import org.dolphinemu.dolphinemu.R;
+import org.dolphinemu.dolphinemu.databinding.ListItemSettingCheckboxBinding;
 import org.dolphinemu.dolphinemu.features.settings.model.view.CheckBoxSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.SettingsItem;
 import org.dolphinemu.dolphinemu.features.settings.ui.SettingsAdapter;
@@ -18,41 +15,28 @@ public final class CheckBoxSettingViewHolder extends SettingViewHolder
 {
   private CheckBoxSetting mItem;
 
-  private TextView mTextSettingName;
-  private TextView mTextSettingDescription;
+  private final ListItemSettingCheckboxBinding mBinding;
 
-  private CheckBox mCheckbox;
-
-  public CheckBoxSettingViewHolder(View itemView, SettingsAdapter adapter)
+  public CheckBoxSettingViewHolder(ListItemSettingCheckboxBinding binding, SettingsAdapter adapter)
   {
-    super(itemView, adapter);
+    super(binding.getRoot(), adapter);
+    mBinding = binding;
   }
 
   @Override
-  protected void findViews(View root)
-  {
-    mTextSettingName = root.findViewById(R.id.text_setting_name);
-    mTextSettingDescription = root.findViewById(R.id.text_setting_description);
-    mCheckbox = root.findViewById(R.id.checkbox);
-  }
+  protected void findViews(View root) {}
 
   @Override
   public void bind(SettingsItem item)
   {
     mItem = (CheckBoxSetting) item;
 
-    mTextSettingName.setText(item.getName());
-    CharSequence description = item.getDescription();
-    mTextSettingDescription.setText(description);
+    mBinding.textSettingName.setText(item.getName());
+    mBinding.textSettingDescription.setText(item.getDescription());
 
-    if (TextUtils.isEmpty(description))
-      mTextSettingDescription.setVisibility(View.GONE);
-    else
-      mTextSettingDescription.setVisibility(View.VISIBLE);
+    mBinding.checkbox.setChecked(mItem.isChecked(getAdapter().getSettings()));
 
-    mCheckbox.setChecked(mItem.isChecked(getAdapter().getSettings()));
-
-    setStyle(mTextSettingName, mItem);
+    setStyle(mBinding.textSettingName, mItem);
   }
 
   @Override
@@ -64,11 +48,11 @@ public final class CheckBoxSettingViewHolder extends SettingViewHolder
       return;
     }
 
-    mCheckbox.toggle();
+    mBinding.checkbox.toggle();
 
-    getAdapter().onBooleanClick(mItem, getBindingAdapterPosition(), mCheckbox.isChecked());
+    getAdapter().onBooleanClick(mItem, getBindingAdapterPosition(), mBinding.checkbox.isChecked());
 
-    setStyle(mTextSettingName, mItem);
+    setStyle(mBinding.textSettingName, mItem);
   }
 
   @Nullable @Override

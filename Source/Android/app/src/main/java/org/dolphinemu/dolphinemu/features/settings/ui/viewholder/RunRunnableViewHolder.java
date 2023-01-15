@@ -4,13 +4,14 @@ package org.dolphinemu.dolphinemu.features.settings.ui.viewholder;
 
 import android.content.Context;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import org.dolphinemu.dolphinemu.R;
+import org.dolphinemu.dolphinemu.databinding.ListItemSettingBinding;
 import org.dolphinemu.dolphinemu.features.settings.model.view.RunRunnable;
 import org.dolphinemu.dolphinemu.features.settings.model.view.SettingsItem;
 import org.dolphinemu.dolphinemu.features.settings.ui.SettingsAdapter;
@@ -21,30 +22,26 @@ public final class RunRunnableViewHolder extends SettingViewHolder
 
   private final Context mContext;
 
-  private TextView mTextSettingName;
-  private TextView mTextSettingDescription;
+  private final ListItemSettingBinding mBinding;
 
-  public RunRunnableViewHolder(View itemView, SettingsAdapter adapter, Context context)
+  public RunRunnableViewHolder(@NonNull ListItemSettingBinding binding, SettingsAdapter adapter,
+          Context context)
   {
-    super(itemView, adapter);
-
+    super(binding.getRoot(), adapter);
+    mBinding = binding;
     mContext = context;
   }
 
   @Override
-  protected void findViews(View root)
-  {
-    mTextSettingName = root.findViewById(R.id.text_setting_name);
-    mTextSettingDescription = root.findViewById(R.id.text_setting_description);
-  }
+  protected void findViews(View root) {}
 
   @Override
   public void bind(SettingsItem item)
   {
     mItem = (RunRunnable) item;
 
-    mTextSettingName.setText(item.getName());
-    mTextSettingDescription.setText(item.getDescription());
+    mBinding.textSettingName.setText(item.getName());
+    mBinding.textSettingDescription.setText(item.getDescription());
   }
 
   @Override

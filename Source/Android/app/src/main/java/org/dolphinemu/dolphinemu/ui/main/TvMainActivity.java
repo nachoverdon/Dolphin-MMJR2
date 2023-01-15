@@ -24,6 +24,7 @@ import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.activities.EmulationActivity;
 import org.dolphinemu.dolphinemu.adapters.GameRowPresenter;
 import org.dolphinemu.dolphinemu.adapters.SettingsRowPresenter;
+import org.dolphinemu.dolphinemu.databinding.ActivityTvMainBinding;
 import org.dolphinemu.dolphinemu.features.settings.ui.MenuTag;
 import org.dolphinemu.dolphinemu.features.settings.ui.SettingsActivity;
 import org.dolphinemu.dolphinemu.model.AppTheme;
@@ -53,12 +54,15 @@ public final class TvMainActivity extends FragmentActivity
 
   private final ArrayList<ArrayObjectAdapter> mGameRows = new ArrayList<>();
 
+  private ActivityTvMainBinding mBinding;
+
   @Override
   protected void onCreate(Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
     AppTheme.applyTheme(this);
-    setContentView(R.layout.activity_tv_main);
+    mBinding = ActivityTvMainBinding.inflate(getLayoutInflater());
+    setContentView(mBinding.getRoot());
 
     setupUI();
 
@@ -118,7 +122,7 @@ public final class TvMainActivity extends FragmentActivity
 
   void setupUI()
   {
-    mSwipeRefresh = findViewById(R.id.swipe_refresh);
+    mSwipeRefresh = mBinding.swipeRefresh;
 
     TypedValue typedValue = new TypedValue();
     getTheme().resolveAttribute(R.attr.colorPrimary, typedValue, true);

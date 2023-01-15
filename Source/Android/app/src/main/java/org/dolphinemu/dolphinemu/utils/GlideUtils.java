@@ -29,7 +29,6 @@ import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.adapters.GameAdapter;
 import org.dolphinemu.dolphinemu.features.settings.model.BooleanSetting;
 import org.dolphinemu.dolphinemu.model.GameFile;
-import org.dolphinemu.dolphinemu.viewholders.GameViewHolder;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -66,7 +65,7 @@ public class GlideUtils
     }
   }
 
-  public static void loadGameCover(GameViewHolder gameViewHolder, ImageView imageView,
+  public static void loadGameCover(GameAdapter.GameViewHolder gameViewHolder, ImageView imageView,
           GameFile gameFile, Activity activity)
   {
 	unmangleExecutor.execute(() ->
@@ -217,19 +216,19 @@ public class GlideUtils
     });
   }
 
-  private static void enableInnerTitle(GameViewHolder gameViewHolder)
+  private static void enableInnerTitle(GameAdapter.GameViewHolder gameViewHolder)
   {
     if (gameViewHolder != null && !BooleanSetting.MAIN_SHOW_GAME_TITLES.getBooleanGlobal())
     {
-      gameViewHolder.textGameTitleInner.setVisibility(View.VISIBLE);
+      gameViewHolder.binding.textGameTitleInner.setVisibility(View.VISIBLE);
     }
   }
 
-  private static void disableInnerTitle(GameViewHolder gameViewHolder)
+  private static void disableInnerTitle(GameAdapter.GameViewHolder gameViewHolder)
   {
     if (gameViewHolder != null && !BooleanSetting.MAIN_SHOW_GAME_TITLES.getBooleanGlobal())
     {
-      gameViewHolder.textGameTitleInner.setVisibility(View.GONE);
+      gameViewHolder.binding.textGameTitleInner.setVisibility(View.GONE);
     }
   }
 }

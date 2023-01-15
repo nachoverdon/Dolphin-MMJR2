@@ -18,19 +18,22 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.dolphinemu.dolphinemu.R;
+import org.dolphinemu.dolphinemu.databinding.ListItemSettingBinding;
+import org.dolphinemu.dolphinemu.databinding.ListItemSettingCheckboxBinding;
+import org.dolphinemu.dolphinemu.databinding.ListItemSubmenuBinding;
 import org.dolphinemu.dolphinemu.dialogs.MotionAlertDialog;
 import org.dolphinemu.dolphinemu.features.settings.model.Settings;
 import org.dolphinemu.dolphinemu.features.settings.model.view.CheckBoxSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.FilePicker;
 import org.dolphinemu.dolphinemu.features.settings.model.view.FloatSliderSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.InputBindingSetting;
+import org.dolphinemu.dolphinemu.features.settings.model.view.InputStringSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.IntSliderSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.RumbleBindingSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.SettingsItem;
 import org.dolphinemu.dolphinemu.features.settings.model.view.SingleChoiceSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.SingleChoiceSettingDynamicDescriptions;
 import org.dolphinemu.dolphinemu.features.settings.model.view.SliderSetting;
-import org.dolphinemu.dolphinemu.features.settings.model.view.InputStringSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.StringSingleChoiceSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.view.SubmenuSetting;
 import org.dolphinemu.dolphinemu.features.settings.ui.viewholder.CheckBoxSettingViewHolder;
@@ -46,7 +49,6 @@ import org.dolphinemu.dolphinemu.features.settings.ui.viewholder.SingleChoiceVie
 import org.dolphinemu.dolphinemu.features.settings.ui.viewholder.SliderSelectorViewHolder;
 import org.dolphinemu.dolphinemu.features.settings.ui.viewholder.SliderViewHolder;
 import org.dolphinemu.dolphinemu.features.settings.ui.viewholder.SubmenuViewHolder;
-import org.dolphinemu.dolphinemu.model.AppTheme;
 import org.dolphinemu.dolphinemu.utils.DirectoryInitialization;
 import org.dolphinemu.dolphinemu.utils.FileBrowserHelper;
 import org.dolphinemu.dolphinemu.utils.Log;
@@ -96,46 +98,40 @@ public final class SettingsAdapter extends RecyclerView.Adapter<SettingViewHolde
         return new HeaderViewHolder(view, this);
 
       case SettingsItem.TYPE_CHECKBOX:
-        view = inflater.inflate(R.layout.list_item_setting_checkbox, parent, false);
-        return new CheckBoxSettingViewHolder(view, this);
+        return new CheckBoxSettingViewHolder(ListItemSettingCheckboxBinding.inflate(inflater),
+          this);
 
       case SettingsItem.TYPE_STRING_SINGLE_CHOICE:
       case SettingsItem.TYPE_SINGLE_CHOICE_DYNAMIC_DESCRIPTIONS:
       case SettingsItem.TYPE_SINGLE_CHOICE:
-        view = inflater.inflate(R.layout.list_item_setting, parent, false);
-        return new SingleChoiceViewHolder(view, this);
+        return new SingleChoiceViewHolder(ListItemSettingBinding.inflate(inflater), this);
 
       case SettingsItem.TYPE_SLIDER:
-        view = inflater.inflate(R.layout.list_item_setting, parent, false);
-        return new SliderViewHolder(view, this, mContext);
+        return new SliderViewHolder(ListItemSettingBinding.inflate(inflater), this, mContext);
 
       case SettingsItem.TYPE_SLIDER_SELECTOR:
         view = inflater.inflate(R.layout.list_item_setting_slider_selector, parent, false);
         return new SliderSelectorViewHolder(view, this);
 
       case SettingsItem.TYPE_SUBMENU:
-        view = inflater.inflate(R.layout.list_item_submenu, parent, false);
-        return new SubmenuViewHolder(view, this);
+        return new SubmenuViewHolder(ListItemSubmenuBinding.inflate(inflater), this);
 
       case SettingsItem.TYPE_INPUT_BINDING:
-        view = inflater.inflate(R.layout.list_item_setting, parent, false);
-        return new InputBindingSettingViewHolder(view, this, mContext);
+        return new InputBindingSettingViewHolder(ListItemSettingBinding.inflate(inflater), this,
+                mContext);
 
       case SettingsItem.TYPE_RUMBLE_BINDING:
-        view = inflater.inflate(R.layout.list_item_setting, parent, false);
-        return new RumbleBindingViewHolder(view, this, mContext);
+        return new RumbleBindingViewHolder(ListItemSettingBinding.inflate(inflater), this,
+                mContext);
 
       case SettingsItem.TYPE_FILE_PICKER:
-        view = inflater.inflate(R.layout.list_item_setting, parent, false);
-        return new FilePickerViewHolder(view, this);
+        return new FilePickerViewHolder(ListItemSettingBinding.inflate(inflater), this);
 
       case SettingsItem.TYPE_RUN_RUNNABLE:
-        view = inflater.inflate(R.layout.list_item_setting, parent, false);
-        return new RunRunnableViewHolder(view, this, mContext);
+        return new RunRunnableViewHolder(ListItemSettingBinding.inflate(inflater), this, mContext);
 
       case SettingsItem.TYPE_STRING:
-        view = inflater.inflate(R.layout.list_item_setting, parent, false);
-        return new InputStringSettingViewHolder(view, this);
+        return new InputStringSettingViewHolder(ListItemSettingBinding.inflate(inflater), this);
 
       case SettingsItem.TYPE_HYPERLINK_HEADER:
         view = inflater.inflate(R.layout.list_item_header, parent, false);

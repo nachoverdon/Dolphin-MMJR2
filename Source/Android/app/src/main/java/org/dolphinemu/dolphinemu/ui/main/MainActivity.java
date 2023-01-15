@@ -14,16 +14,14 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.viewpager.widget.ViewPager;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 
 import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.activities.EmulationActivity;
 import org.dolphinemu.dolphinemu.adapters.PlatformPagerAdapter;
+import org.dolphinemu.dolphinemu.databinding.ActivityMainBinding;
 import org.dolphinemu.dolphinemu.features.settings.model.IntSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.NativeConfig;
 import org.dolphinemu.dolphinemu.features.settings.ui.MenuTag;
@@ -48,26 +46,23 @@ import org.dolphinemu.dolphinemu.utils.UpdaterUtils;
 public final class MainActivity extends AppCompatActivity
         implements MainView, SwipeRefreshLayout.OnRefreshListener
 {
-  private ViewPager mViewPager;
-  private Toolbar mToolbar;
-  private TabLayout mTabLayout;
-  private FloatingActionButton mFab;
-
   private final MainPresenter mPresenter = new MainPresenter(this, this);
+
+  private ActivityMainBinding mBinding;
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
   {
     super.onCreate(savedInstanceState);
     AppTheme.applyTheme(this);
-    setContentView(R.layout.activity_main);
+	
+    mBinding = ActivityMainBinding.inflate(getLayoutInflater());
+    setContentView(mBinding.getRoot());
 
-    findViews();
-
-    setSupportActionBar(mToolbar);
+    setSupportActionBar(mBinding.toolbarMain);
 
     // Set up the FAB.
-    mFab.setOnClickListener(view -> mPresenter.onFabClick());
+    mBinding.buttonAddDirectory.setOnClickListener(view -> mPresenter.onFabClick());
 
     mPresenter.onCreate();
 
@@ -133,15 +128,6 @@ public final class MainActivity extends AppCompatActivity
     StartupHandler.setSessionTime(this);
   }
 
-  // TODO: Replace with a ButterKnife injection.
-  private void findViews()
-  {
-    mToolbar = findViewById(R.id.toolbar_main);
-    mViewPager = findViewById(R.id.pager_platforms);
-    mTabLayout = findViewById(R.id.tabs_platforms);
-    mFab = findViewById(R.id.button_add_directory);
-  }
-
   @Override
   public boolean onCreateOptionsMenu(Menu menu)
   {
@@ -168,7 +154,7 @@ public final class MainActivity extends AppCompatActivity
   @Override
   public void setVersionString(String version)
   {
-    mToolbar.setSubtitle(version);
+    mBinding.toolbarMain.setSubtitle(version);
   }
 
   @Override
@@ -337,7 +323,8 @@ public final class MainActivity extends AppCompatActivity
   @Nullable
   private PlatformGamesView getPlatformGamesView(Platform platform)
   {
-    String fragmentTag = "android:switcher:" + mViewPager.getId() + ":" + platform.toInt();
+    String fragmentTag =
+            "android:switcher:" + mBinding.pagerPlatforms.getId() + ":" + platform.toInt();
 
     return (PlatformGamesView) getSupportFragmentManager().findFragmentByTag(fragmentTag);
   }
@@ -347,20 +334,22 @@ public final class MainActivity extends AppCompatActivity
   {
     PlatformPagerAdapter platformPagerAdapter = new PlatformPagerAdapter(
             getSupportFragmentManager(), this, this);
-    mViewPager.setAdapter(platformPagerAdapter);
-    mViewPager.setOffscreenPageLimit(platformPagerAdapter.getCount());
-    mTabLayout.setupWithViewPager(mViewPager);
-    mTabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager)
-    {
-      @Override
-      public void onTabSelected(@NonNull TabLayout.Tab tab)
-      {
-        super.onTabSelected(tab);
-        IntSetting.MAIN_LAST_PLATFORM_TAB.setIntGlobal(NativeConfig.LAYER_BASE, tab.getPosition());
-      }
-    });
+    mBinding.pagerPlatforms.setAdapter(platformPagerAdapter);
+    mBinding.pagerPlatforms.setOffscreenPageLimit(platformPagerAdapter.getCount());
+    mBinding.tabsPlatforms.setupWithViewPager(mBinding.pagerPlatforms);
+    mBinding.tabsPlatforms.addOnTabSelectedListener(
+            new TabLayout.ViewPagerOnTabSelectedListener(mBinding.pagerPlatforms)
+            {
+              @Override
+              public void onTabSelected(@NonNull TabLayout.Tab tab)
+              {
+                super.onTabSelected(tab);
+                IntSetting.MAIN_LAST_PLATFORM_TAB.setIntGlobal(NativeConfig.LAYER_BASE,
+                        tab.getPosition());
+              }
+            });
 
-    mViewPager.setCurrentItem(IntSetting.MAIN_LAST_PLATFORM_TAB.getIntGlobal());
+    mBinding.pagerPlatforms.setCurrentItem(IntSetting.MAIN_LAST_PLATFORM_TAB.getIntGlobal());
 
     showGames();
     GameFileCacheManager.startLoad();

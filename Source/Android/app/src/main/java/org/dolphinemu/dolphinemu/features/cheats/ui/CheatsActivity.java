@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.slidingpanelayout.widget.SlidingPaneLayout;
 
 import org.dolphinemu.dolphinemu.R;
+import org.dolphinemu.dolphinemu.databinding.ActivityCheatsBinding;
 import org.dolphinemu.dolphinemu.features.cheats.model.Cheat;
 import org.dolphinemu.dolphinemu.features.cheats.model.CheatsViewModel;
 import org.dolphinemu.dolphinemu.features.cheats.model.GeckoCheat;
@@ -39,12 +40,10 @@ public class CheatsActivity extends AppCompatActivity
   private boolean mIsWii;
   private CheatsViewModel mViewModel;
 
-  private SlidingPaneLayout mSlidingPaneLayout;
-  private View mCheatList;
-  private View mCheatDetails;
-
   private View mCheatListLastFocus;
   private View mCheatDetailsLastFocus;
+
+  private ActivityCheatsBinding mBinding;
 
   public static void launch(Context context, String gameId, String gameTdbId, int revision,
           boolean isWii)
@@ -75,19 +74,16 @@ public class CheatsActivity extends AppCompatActivity
     mViewModel = new ViewModelProvider(this).get(CheatsViewModel.class);
     mViewModel.load(mGameId, mRevision);
 
-    setContentView(R.layout.activity_cheats);
+    mBinding = ActivityCheatsBinding.inflate(getLayoutInflater());
+    setContentView(mBinding.getRoot());
 
-    mSlidingPaneLayout = findViewById(R.id.sliding_pane_layout);
-    mCheatList = findViewById(R.id.cheat_list);
-    mCheatDetails = findViewById(R.id.cheat_details);
+    mCheatListLastFocus = mBinding.cheatList;
+    mCheatDetailsLastFocus = mBinding.cheatDetails;
 
-    mCheatListLastFocus = mCheatList;
-    mCheatDetailsLastFocus = mCheatDetails;
-
-    mSlidingPaneLayout.addPanelSlideListener(this);
+    mBinding.slidingPaneLayout.addPanelSlideListener(this);
 
     getOnBackPressedDispatcher().addCallback(this,
-            new TwoPaneOnBackPressedCallback(mSlidingPaneLayout));
+            new TwoPaneOnBackPressedCallback(mBinding.slidingPaneLayout));
 
     mViewModel.getSelectedCheat().observe(this, this::onSelectedCheatChanged);
     onSelectedCheatChanged(mViewModel.getSelectedCheat().getValue());
@@ -138,10 +134,10 @@ public class CheatsActivity extends AppCompatActivity
   {
     boolean cheatSelected = selectedCheat != null;
 
-    if (!cheatSelected && mSlidingPaneLayout.isOpen())
-      mSlidingPaneLayout.close();
+    if (!cheatSelected && mBinding.slidingPaneLayout.isOpen())
+      mBinding.slidingPaneLayout.close();
 
-    mSlidingPaneLayout.setLockMode(cheatSelected ?
+    mBinding.slidingPaneLayout.setLockMode(cheatSelected ?
             SlidingPaneLayout.LOCK_MODE_UNLOCKED : SlidingPaneLayout.LOCK_MODE_LOCKED_CLOSED);
   }
 
@@ -149,11 +145,11 @@ public class CheatsActivity extends AppCompatActivity
   {
     if (hasFocus)
     {
-      mCheatListLastFocus = mCheatList.findFocus();
+      mCheatListLastFocus = mBinding.cheatList.findFocus();
       if (mCheatListLastFocus == null)
         throw new NullPointerException();
 
-      mSlidingPaneLayout.close();
+      mBinding.slidingPaneLayout.close();
     }
   }
 
@@ -161,11 +157,11 @@ public class CheatsActivity extends AppCompatActivity
   {
     if (hasFocus)
     {
-      mCheatDetailsLastFocus = mCheatDetails.findFocus();
+      mCheatDetailsLastFocus = mBinding.cheatDetails.findFocus();
       if (mCheatDetailsLastFocus == null)
         throw new NullPointerException();
 
-      mSlidingPaneLayout.open();
+      mBinding.slidingPaneLayout.open();
     }
   }
 
@@ -179,7 +175,7 @@ public class CheatsActivity extends AppCompatActivity
   private void openDetailsView(boolean open)
   {
     if (open)
-      mSlidingPaneLayout.open();
+      mBinding.slidingPaneLayout.open();
   }
 
   public Settings loadGameSpecificSettings()

@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.model.AppTheme;
+import org.dolphinemu.dolphinemu.databinding.ActivityConvertBinding;
 import org.dolphinemu.dolphinemu.fragments.ConvertFragment;
 
 
@@ -29,7 +30,8 @@ public class ConvertActivity extends AppCompatActivity
   {
     super.onCreate(savedInstanceState);
     AppTheme.applyTheme(this);
-    setContentView(R.layout.activity_convert);
+    ActivityConvertBinding binding = ActivityConvertBinding.inflate(getLayoutInflater());
+    setContentView(binding.getRoot());
 
     String path = getIntent().getStringExtra(ARG_GAME_PATH);
 

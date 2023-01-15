@@ -1,5 +1,7 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_emulation"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/dolphin_background"
@@ -12,6 +14,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:baselineAligned="false">
+
         <!-- This is what everything is rendered to during emulation -->
         <SurfaceView
             android:id="@+id/surface_emulation"
@@ -19,19 +22,22 @@
             android:layout_width="wrap_content"
             android:layout_weight="1"
             android:focusable="false"
-            android:focusableInTouchMode="false"/>
+            android:focusableInTouchMode="false" />
+
         <RelativeLayout
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:layout_weight="1" />
+
     </LinearLayout>
+
     <!-- This is the onscreen input overlay -->
     <org.dolphinemu.dolphinemu.overlay.InputOverlay
         android:id="@+id/surface_input_overlay"
         android:layout_height="match_parent"
         android:layout_width="match_parent"
         android:focusable="true"
-        android:focusableInTouchMode="true"/>
+        android:focusableInTouchMode="true" />
 
     <Button
         android:id="@+id/done_control_config"
@@ -43,6 +49,6 @@
         android:foreground="?android:attr/selectableItemBackground"
         android:textColor="?attr/colorOnGradientPrimary"
         android:text="@string/emulation_done"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
 </FrameLayout>

@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import org.dolphinemu.dolphinemu.NativeLibrary;
 import org.dolphinemu.dolphinemu.R;
+import org.dolphinemu.dolphinemu.databinding.ActivitySettingsBinding;
 import org.dolphinemu.dolphinemu.model.AppTheme;
 import org.dolphinemu.dolphinemu.ui.main.MainPresenter;
 import org.dolphinemu.dolphinemu.utils.FileBrowserHelper;
@@ -64,7 +65,8 @@ public final class SettingsActivity extends AppCompatActivity implements Setting
     MainPresenter.skipRescanningLibrary();
 
     AppTheme.applyTheme(this);
-    setContentView(R.layout.activity_settings);
+    ActivitySettingsBinding binding = ActivitySettingsBinding.inflate(getLayoutInflater());
+    setContentView(binding.getRoot());
 
     Intent launcher = getIntent();
     String gameID = launcher.getStringExtra(ARG_GAME_ID);

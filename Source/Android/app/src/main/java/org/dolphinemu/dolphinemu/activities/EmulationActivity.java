@@ -2,6 +2,8 @@
 
 package org.dolphinemu.dolphinemu.activities;
 
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -12,13 +14,11 @@ import android.os.Bundle;
 import android.util.SparseIntArray;
 import android.view.InputDevice;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,14 +33,19 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
 
+import com.google.android.material.slider.Slider;
+
 import org.dolphinemu.dolphinemu.NativeLibrary;
 import org.dolphinemu.dolphinemu.R;
-import org.dolphinemu.dolphinemu.features.settings.ui.QuickSettingsFragment;
+import org.dolphinemu.dolphinemu.databinding.ActivityEmulationBinding;
+import org.dolphinemu.dolphinemu.databinding.DialogInputAdjustBinding;
+import org.dolphinemu.dolphinemu.databinding.DialogIrSensitivityBinding;
 import org.dolphinemu.dolphinemu.features.settings.model.BooleanSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.IntSetting;
 import org.dolphinemu.dolphinemu.features.settings.model.Settings;
 import org.dolphinemu.dolphinemu.features.settings.model.StringSetting;
 import org.dolphinemu.dolphinemu.features.settings.ui.MenuTag;
+import org.dolphinemu.dolphinemu.features.settings.ui.QuickSettingsFragment;
 import org.dolphinemu.dolphinemu.features.settings.ui.SettingsActivity;
 import org.dolphinemu.dolphinemu.features.settings.utils.SettingsFile;
 import org.dolphinemu.dolphinemu.fragments.EmulationFragment;
@@ -60,8 +65,6 @@ import org.dolphinemu.dolphinemu.utils.Rumble;
 import java.io.File;
 import java.lang.annotation.Retention;
 import java.util.List;
-
-import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 public final class EmulationActivity extends AppCompatActivity
 {
@@ -337,7 +340,8 @@ public final class EmulationActivity extends AppCompatActivity
     Rumble.initRumble(this);
 
     AppTheme.applyTheme(this);
-    setContentView(R.layout.activity_emulation);
+    ActivityEmulationBinding binding = ActivityEmulationBinding.inflate(getLayoutInflater());
+    setContentView(binding.getRoot());
 
     // Find or create the EmulationFragment
     mEmulationFragment = (EmulationFragment) getSupportFragmentManager()
@@ -913,66 +917,34 @@ public final class EmulationActivity extends AppCompatActivity
 
   private void adjustScale()
   {
-    LayoutInflater inflater = LayoutInflater.from(this);
-    View view = inflater.inflate(R.layout.dialog_input_adjust, null);
+    DialogInputAdjustBinding dialogBinding = DialogInputAdjustBinding.inflate(getLayoutInflater());
 
-    final SeekBar scaleSeekbar = view.findViewById(R.id.input_scale_seekbar);
-    final TextView scaleValue = view.findViewById(R.id.input_scale_value);
-
-    scaleSeekbar.setMax(150);
-    scaleSeekbar.setProgress(IntSetting.MAIN_CONTROL_SCALE.getInt(mSettings));
-    scaleSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
-    {
-      public void onStartTrackingTouch(SeekBar seekBar)
-      {
-        // Do nothing
-      }
-
-      public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
-      {
-        scaleValue.setText((progress + 50) + "%");
-      }
-
-      public void onStopTrackingTouch(SeekBar seekBar)
-      {
-        // Do nothing
-      }
-    });
-
-    scaleValue.setText((scaleSeekbar.getProgress() + 50) + "%");
+    final Slider scaleSlider = dialogBinding.inputScaleSlider;
+    final TextView scaleValue = dialogBinding.inputScaleValue;
+    scaleSlider.setValueTo(150);
+    scaleSlider.setValue(IntSetting.MAIN_CONTROL_SCALE.getInt(mSettings));
+    scaleSlider.setStepSize(1);
+    scaleSlider.addOnChangeListener(
+            (slider, progress, fromUser) -> scaleValue.setText(((int) progress + 50) + "%"));
+    scaleValue.setText(((int) scaleSlider.getValue() + 50) + "%");
 
     // alpha
-    final SeekBar seekbarOpacity = view.findViewById(R.id.input_opacity_seekbar);
-    final TextView valueOpacity = view.findViewById(R.id.input_opacity_value);
-
-    seekbarOpacity.setMax(100);
-    seekbarOpacity.setProgress(IntSetting.MAIN_CONTROL_OPACITY.getInt(mSettings));
-    seekbarOpacity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
-    {
-      public void onStartTrackingTouch(SeekBar seekBar)
-      {
-        // Do nothing
-      }
-
-      public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
-      {
-        valueOpacity.setText(progress + "%");
-      }
-
-      public void onStopTrackingTouch(SeekBar seekBar)
-      {
-        // Do nothing
-      }
-    });
-    valueOpacity.setText(seekbarOpacity.getProgress() + "%");
+    final Slider sliderOpacity = dialogBinding.inputOpacitySlider;
+    final TextView valueOpacity = dialogBinding.inputOpacityValue;
+    sliderOpacity.setValueTo(100);
+    sliderOpacity.setValue(IntSetting.MAIN_CONTROL_OPACITY.getInt(mSettings));
+    sliderOpacity.setStepSize(1);
+    sliderOpacity.addOnChangeListener(
+            (slider, progress, fromUser) -> valueOpacity.setText(((int) progress) + "%"));
+    valueOpacity.setText(((int) sliderOpacity.getValue()) + "%");
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setTitle(R.string.emulation_control_adjustments);
-    builder.setView(view);
+    builder.setView(dialogBinding.getRoot());
     builder.setPositiveButton(R.string.ok, (dialogInterface, i) ->
     {
-      IntSetting.MAIN_CONTROL_SCALE.setInt(mSettings, scaleSeekbar.getProgress());
-      IntSetting.MAIN_CONTROL_OPACITY.setInt(mSettings, seekbarOpacity.getProgress());
+      IntSetting.MAIN_CONTROL_SCALE.setInt(mSettings, (int) scaleSlider.getValue());
+      IntSetting.MAIN_CONTROL_OPACITY.setInt(mSettings, (int) sliderOpacity.getValue());
       mEmulationFragment.refreshInputOverlay();
     });
     builder.setNeutralButton(R.string.default_values, (dialogInterface, i) ->
@@ -1095,99 +1067,55 @@ public final class EmulationActivity extends AppCompatActivity
 
     int ir_pitch = ini.getInt(Settings.SECTION_CONTROLS, SettingsFile.KEY_WIIBIND_IR_PITCH, 20);
 
-    LayoutInflater inflater = LayoutInflater.from(this);
-    View view = inflater.inflate(R.layout.dialog_ir_sensitivity, null);
+    DialogIrSensitivityBinding dialogBinding =
+            DialogIrSensitivityBinding.inflate(getLayoutInflater());
 
-    TextView text_slider_value_pitch = view.findViewById(R.id.text_ir_pitch);
-    TextView units = view.findViewById(R.id.text_ir_pitch_units);
-    SeekBar seekbar_pitch = view.findViewById(R.id.seekbar_pitch);
+    TextView text_slider_value_pitch = dialogBinding.textIrPitch;
+    TextView units = dialogBinding.textIrPitchUnits;
+    Slider slider_pitch = dialogBinding.sliderPitch;
 
     text_slider_value_pitch.setText(String.valueOf(ir_pitch));
     units.setText(getString(R.string.pitch));
-    seekbar_pitch.setMax(100);
-    seekbar_pitch.setProgress(ir_pitch);
-    seekbar_pitch.setKeyProgressIncrement(5);
-    seekbar_pitch.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
-    {
-      @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
-      {
-        text_slider_value_pitch.setText(String.valueOf(progress));
-      }
-
-      @Override public void onStartTrackingTouch(SeekBar seekBar)
-      {
-        // Do nothing
-      }
-
-      @Override public void onStopTrackingTouch(SeekBar seekBar)
-      {
-        // Do nothing
-      }
-    });
+    slider_pitch.setValueTo(100);
+    slider_pitch.setValue(ir_pitch);
+    slider_pitch.setStepSize(1);
+    slider_pitch.addOnChangeListener(
+            (slider, progress, fromUser) -> text_slider_value_pitch.setText(
+                    String.valueOf((int) progress)));
 
     int ir_yaw = ini.getInt(Settings.SECTION_CONTROLS, SettingsFile.KEY_WIIBIND_IR_YAW, 25);
 
-    TextView text_slider_value_yaw = view.findViewById(R.id.text_ir_yaw);
-    TextView units_yaw = view.findViewById(R.id.text_ir_yaw_units);
-    SeekBar seekbar_yaw = view.findViewById(R.id.seekbar_width);
+    TextView text_slider_value_yaw = dialogBinding.textIrYaw;
+    TextView units_yaw = dialogBinding.textIrYawUnits;
+    Slider seekbar_yaw = dialogBinding.sliderYaw;
 
     text_slider_value_yaw.setText(String.valueOf(ir_yaw));
     units_yaw.setText(getString(R.string.yaw));
-    seekbar_yaw.setMax(100);
-    seekbar_yaw.setProgress(ir_yaw);
-    seekbar_yaw.setKeyProgressIncrement(5);
-    seekbar_yaw.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
-    {
-      @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
-      {
-        text_slider_value_yaw.setText(String.valueOf(progress));
-      }
-
-      @Override public void onStartTrackingTouch(SeekBar seekBar)
-      {
-        // Do nothing
-      }
-
-      @Override public void onStopTrackingTouch(SeekBar seekBar)
-      {
-        // Do nothing
-      }
-    });
-
+    seekbar_yaw.setValueTo(100);
+    seekbar_yaw.setValue(ir_yaw);
+    seekbar_yaw.setStepSize(1);
+    seekbar_yaw.addOnChangeListener((slider, progress, fromUser) -> text_slider_value_yaw.setText(
+            String.valueOf((int) progress)));
 
     int ir_vertical_offset =
             ini.getInt(Settings.SECTION_CONTROLS, SettingsFile.KEY_WIIBIND_IR_VERTICAL_OFFSET, 10);
 
-    TextView text_slider_value_vertical_offset = view.findViewById(R.id.text_ir_vertical_offset);
-    TextView units_vertical_offset = view.findViewById(R.id.text_ir_vertical_offset_units);
-    SeekBar seekbar_vertical_offset = view.findViewById(R.id.seekbar_vertical_offset);
+    TextView text_slider_value_vertical_offset = dialogBinding.textIrVerticalOffset;
+    TextView units_vertical_offset = dialogBinding.textIrVerticalOffsetUnits;
+    Slider seekbar_vertical_offset = dialogBinding.sliderVerticalOffset;
 
     text_slider_value_vertical_offset.setText(String.valueOf(ir_vertical_offset));
     units_vertical_offset.setText(getString(R.string.vertical_offset));
-    seekbar_vertical_offset.setMax(100);
-    seekbar_vertical_offset.setProgress(ir_vertical_offset);
-    seekbar_vertical_offset.setKeyProgressIncrement(5);
-    seekbar_vertical_offset.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
-    {
-      @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
-      {
-        text_slider_value_vertical_offset.setText(String.valueOf(progress));
-      }
-
-      @Override public void onStartTrackingTouch(SeekBar seekBar)
-      {
-        // Do nothing
-      }
-
-      @Override public void onStopTrackingTouch(SeekBar seekBar)
-      {
-        // Do nothing
-      }
-    });
+    seekbar_vertical_offset.setValueTo(100);
+    seekbar_vertical_offset.setValue(ir_vertical_offset);
+    seekbar_vertical_offset.setStepSize(1);
+    seekbar_vertical_offset.addOnChangeListener(
+            (slider, progress, fromUser) -> text_slider_value_vertical_offset.setText(
+                    String.valueOf((int) progress)));
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setTitle(getString(R.string.emulation_ir_sensitivity));
-    builder.setView(view);
+    builder.setView(dialogBinding.getRoot());
     builder.setPositiveButton(R.string.ok, (dialogInterface, i) ->
     {
       ini.setString(Settings.SECTION_CONTROLS, SettingsFile.KEY_WIIBIND_IR_PITCH,
