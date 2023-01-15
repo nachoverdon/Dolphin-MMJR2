@@ -10,9 +10,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.dolphinemu.dolphinemu.R;
-import org.dolphinemu.dolphinemu.databinding.ListItemCheatBinding;
-import org.dolphinemu.dolphinemu.databinding.ListItemHeaderBinding;
-import org.dolphinemu.dolphinemu.databinding.ListItemSubmenuBinding;
 import org.dolphinemu.dolphinemu.features.cheats.model.ARCheat;
 import org.dolphinemu.dolphinemu.features.cheats.model.CheatsViewModel;
 import org.dolphinemu.dolphinemu.features.cheats.model.GeckoCheat;
@@ -69,17 +66,17 @@ public class CheatsAdapter extends RecyclerView.Adapter<CheatItemViewHolder>
     switch (viewType)
     {
       case CheatItem.TYPE_CHEAT:
-        ListItemCheatBinding listItemCheatBinding = ListItemCheatBinding.inflate(inflater);
-        addViewListeners(listItemCheatBinding.getRoot());
-        return new CheatViewHolder(listItemCheatBinding);
+        View cheatView = inflater.inflate(R.layout.list_item_cheat, parent, false);
+        addViewListeners(cheatView);
+        return new CheatViewHolder(cheatView);
       case CheatItem.TYPE_HEADER:
-        ListItemHeaderBinding listItemHeaderBinding = ListItemHeaderBinding.inflate(inflater);
-        addViewListeners(listItemHeaderBinding.getRoot());
-        return new HeaderViewHolder(listItemHeaderBinding);
+        View headerView = inflater.inflate(R.layout.list_item_header, parent, false);
+        addViewListeners(headerView);
+        return new HeaderViewHolder(headerView);
       case CheatItem.TYPE_ACTION:
-        ListItemSubmenuBinding listItemSubmenuBinding = ListItemSubmenuBinding.inflate(inflater);
-        addViewListeners(listItemSubmenuBinding.getRoot());
-        return new ActionViewHolder(listItemSubmenuBinding);
+        View actionView = inflater.inflate(R.layout.list_item_submenu, parent, false);
+        addViewListeners(actionView);
+        return new ActionViewHolder(actionView);
       default:
         throw new UnsupportedOperationException();
     }

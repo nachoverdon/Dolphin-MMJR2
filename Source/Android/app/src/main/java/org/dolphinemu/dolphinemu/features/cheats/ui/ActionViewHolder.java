@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProvider;
 
 import org.dolphinemu.dolphinemu.R;
-import org.dolphinemu.dolphinemu.databinding.ListItemSubmenuBinding;
 import org.dolphinemu.dolphinemu.features.cheats.model.ARCheat;
 import org.dolphinemu.dolphinemu.features.cheats.model.CheatsViewModel;
 import org.dolphinemu.dolphinemu.features.cheats.model.GeckoCheat;
@@ -24,13 +23,13 @@ public class ActionViewHolder extends CheatItemViewHolder implements View.OnClic
   private int mString;
   private int mPosition;
 
-  public ActionViewHolder(@NonNull ListItemSubmenuBinding binding)
+  public ActionViewHolder(@NonNull View itemView)
   {
-    super(binding.getRoot());
+    super(itemView);
 
-    mName = binding.textSettingName;
+    mName = itemView.findViewById(R.id.text_setting_name);
 
-    binding.getRoot().setOnClickListener(this);
+    itemView.setOnClickListener(this);
   }
 
   public void bind(CheatsActivity activity, CheatItem item, int position)
