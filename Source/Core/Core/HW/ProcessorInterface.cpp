@@ -39,13 +39,13 @@ static u32 m_ResetCode;
 
 // ID and callback for scheduling reset button presses/releases
 static CoreTiming::EventType* toggleResetButton;
-static void ToggleResetButtonCallback(u64 userdata, s64 cyclesLate);
+static void ToggleResetButtonCallback(Core::System& system, u64 userdata, s64 cyclesLate);
 
 static CoreTiming::EventType* iosNotifyResetButton;
-static void IOSNotifyResetButtonCallback(u64 userdata, s64 cyclesLate);
+static void IOSNotifyResetButtonCallback(Core::System& system, u64 userdata, s64 cyclesLate);
 
 static CoreTiming::EventType* iosNotifyPowerButton;
-static void IOSNotifyPowerButtonCallback(u64 userdata, s64 cyclesLate);
+static void IOSNotifyPowerButtonCallback(Core::System& system, u64 userdata, s64 cyclesLate);
 
 // Let the PPC know that an external exception is set/cleared
 void UpdateException();
@@ -82,13 +82,13 @@ void Init()
 void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
 {
   mmio->Register(base | PI_INTERRUPT_CAUSE, MMIO::DirectRead<u32>(&m_InterruptCause),
-                 MMIO::ComplexWrite<u32>([](u32, u32 val) {
+                 MMIO::ComplexWrite<u32>([](Core::System&, u32, u32 val) {
                    m_InterruptCause &= ~val;
                    UpdateException();
                  }));
 
   mmio->Register(base | PI_INTERRUPT_MASK, MMIO::DirectRead<u32>(&m_InterruptMask),
-                 MMIO::ComplexWrite<u32>([](u32, u32 val) {
+                 MMIO::ComplexWrite<u32>([](Core::System&, u32, u32 val) {
                    m_InterruptMask = val;
                    UpdateException();
                  }));
@@ -103,7 +103,7 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
                  MMIO::DirectWrite<u32>(&Fifo_CPUWritePointer, 0xFFFFFFE0));
 
   mmio->Register(base | PI_FIFO_RESET, MMIO::InvalidRead<u32>(),
-                 MMIO::ComplexWrite<u32>([](u32, u32 val) {
+                 MMIO::ComplexWrite<u32>([](Core::System&, u32, u32 val) {
                    // Used by GXAbortFrame
                    INFO_LOG_FMT(PROCESSORINTERFACE, "Wrote PI_FIFO_RESET: {:08x}", val);
                    if ((val & 1) != 0)
@@ -125,11 +125,11 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
                    }
                  }));
 
-  mmio->Register(base | PI_RESET_CODE, MMIO::ComplexRead<u32>([](u32) {
+  mmio->Register(base | PI_RESET_CODE, MMIO::ComplexRead<u32>([](Core::System&, u32) {
                    DEBUG_LOG_FMT(PROCESSORINTERFACE, "Read PI_RESET_CODE: {:08x}", m_ResetCode);
                    return m_ResetCode;
                  }),
-                 MMIO::ComplexWrite<u32>([](u32, u32 val) {
+                 MMIO::ComplexWrite<u32>([](Core::System&, u32, u32 val) {
                    m_ResetCode = val;
                    INFO_LOG_FMT(PROCESSORINTERFACE, "Wrote PI_RESET_CODE: {:08x}", m_ResetCode);
                    if (!SConfig::GetInstance().bWii && ~m_ResetCode & 0x4)
@@ -230,12 +230,12 @@ static void SetResetButton(bool set)
   SetInterrupt(INT_CAUSE_RST_BUTTON, !set);
 }
 
-static void ToggleResetButtonCallback(u64 userdata, s64 cyclesLate)
+static void ToggleResetButtonCallback(Core::System& system, u64 userdata, s64 cyclesLate)
 {
   SetResetButton(!!userdata);
 }
 
-static void IOSNotifyResetButtonCallback(u64 userdata, s64 cyclesLate)
+static void IOSNotifyResetButtonCallback(Core::System& system, u64 userdata, s64 cyclesLate)
 {
   const auto ios = IOS::HLE::GetIOS();
   if (!ios)
@@ -246,7 +246,7 @@ static void IOSNotifyResetButtonCallback(u64 userdata, s64 cyclesLate)
     std::static_pointer_cast<IOS::HLE::STMEventHookDevice>(stm)->ResetButton();
 }
 
-static void IOSNotifyPowerButtonCallback(u64 userdata, s64 cyclesLate)
+static void IOSNotifyPowerButtonCallback(Core::System& system, u64 userdata, s64 cyclesLate)
 {
   const auto ios = IOS::HLE::GetIOS();
   if (!ios)

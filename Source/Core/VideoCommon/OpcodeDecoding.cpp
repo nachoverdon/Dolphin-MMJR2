@@ -55,18 +55,26 @@ public:
     if constexpr (!is_preprocess)
     {
       if (sub_command == MATINDEX_A)
+      {
+        VertexLoaderManager::g_needs_cp_xf_consistency_check = true;
         VertexShaderManager::SetTexMatrixChangedA(value);
+      }
       else if (sub_command == MATINDEX_B)
+      {
+        VertexLoaderManager::g_needs_cp_xf_consistency_check = true;
         VertexShaderManager::SetTexMatrixChangedB(value);
+      }
       else if (sub_command == VCD_LO || sub_command == VCD_HI)
       {
         VertexLoaderManager::g_main_vat_dirty = BitSet8::AllTrue(CP_NUM_VAT_REG);
         VertexLoaderManager::g_bases_dirty = true;
+        VertexLoaderManager::g_needs_cp_xf_consistency_check = true;
       }
       else if (sub_command == CP_VAT_REG_A || sub_command == CP_VAT_REG_B ||
                sub_command == CP_VAT_REG_C)
       {
         VertexLoaderManager::g_main_vat_dirty[command & CP_VAT_MASK] = true;
+        VertexLoaderManager::g_needs_cp_xf_consistency_check = true;
       }
       else if (sub_command == ARRAY_BASE)
       {
@@ -118,10 +126,8 @@ public:
     // load vertices
     const u32 size = vertex_size * num_vertices;
 
-    // HACK
-    DataReader src{const_cast<u8*>(vertex_data), const_cast<u8*>(vertex_data) + size};
     const u32 bytes =
-        VertexLoaderManager::RunVertices<is_preprocess>(vat, primitive, num_vertices, src);
+        VertexLoaderManager::RunVertices<is_preprocess>(vat, primitive, num_vertices, vertex_data);
 
     ASSERT(bytes == size);
 

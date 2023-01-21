@@ -243,10 +243,10 @@ static void SetNoResponse(u32 channel)
   }
 }
 
-static void ChangeDeviceCallback(u64 user_data, s64 cycles_late)
+static void ChangeDeviceCallback(Core::System& system, u64 user_data, s64 cycles_late)
 {
   // The purpose of this callback is to simply re-enable device changes.
-  auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+  auto& state = system.GetSerialInterfaceState().GetData();
   state.channel[user_data].has_recent_device_change = false;
 }
 
@@ -295,9 +295,9 @@ constexpr s32 ConvertSILengthField(u32 field)
   return ((field - 1) & SI_XFER_LENGTH_MASK) + 1;
 }
 
-static void RunSIBuffer(u64 user_data, s64 cycles_late)
+static void RunSIBuffer(Core::System& system, u64 user_data, s64 cycles_late)
 {
-  auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+  auto& state = system.GetSerialInterfaceState().GetData();
   if (state.com_csr.TSTART)
   {
     const s32 request_length = ConvertSILengthField(state.com_csr.OUTLNGTH);
@@ -380,9 +380,9 @@ void DoState(PointerWrap& p)
 }
 
 template <int device_number>
-static void DeviceEventCallback(u64 userdata, s64 cyclesLate)
+static void DeviceEventCallback(Core::System& system, u64 userdata, s64 cyclesLate)
 {
-  auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+  auto& state = system.GetSerialInterfaceState().GetData();
   state.channel[device_number].device->OnEvent(userdata, cyclesLate);
 }
 
@@ -490,14 +490,14 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
   {
     const u32 address = base | static_cast<u32>(io_buffer_base + i);
 
-    mmio->Register(address, MMIO::ComplexRead<u32>([i](u32) {
-                     auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+    mmio->Register(address, MMIO::ComplexRead<u32>([i](Core::System& system, u32) {
+                     auto& state = system.GetSerialInterfaceState().GetData();
                      u32 val;
                      std::memcpy(&val, &state.si_buffer[i], sizeof(val));
                      return Common::swap32(val);
                    }),
-                   MMIO::ComplexWrite<u32>([i](u32, u32 val) {
-                     auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+                   MMIO::ComplexWrite<u32>([i](Core::System& system, u32, u32 val) {
+                     auto& state = system.GetSerialInterfaceState().GetData();
                      val = Common::swap32(val);
                      std::memcpy(&state.si_buffer[i], &val, sizeof(val));
                    }));
@@ -506,14 +506,14 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
   {
     const u32 address = base | static_cast<u32>(io_buffer_base + i);
 
-    mmio->Register(address, MMIO::ComplexRead<u16>([i](u32) {
-                     auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+    mmio->Register(address, MMIO::ComplexRead<u16>([i](Core::System& system, u32) {
+                     auto& state = system.GetSerialInterfaceState().GetData();
                      u16 val;
                      std::memcpy(&val, &state.si_buffer[i], sizeof(val));
                      return Common::swap16(val);
                    }),
-                   MMIO::ComplexWrite<u16>([i](u32, u16 val) {
-                     auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+                   MMIO::ComplexWrite<u16>([i](Core::System& system, u32, u16 val) {
+                     auto& state = system.GetSerialInterfaceState().GetData();
                      val = Common::swap16(val);
                      std::memcpy(&state.si_buffer[i], &val, sizeof(val));
                    }));
@@ -533,16 +533,16 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
                    MMIO::DirectRead<u32>(&state.channel[i].out.hex),
                    MMIO::DirectWrite<u32>(&state.channel[i].out.hex));
     mmio->Register(base | (SI_CHANNEL_0_IN_HI + 0xC * i),
-                   MMIO::ComplexRead<u32>([i, rdst_bit](u32) {
-                     auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+                   MMIO::ComplexRead<u32>([i, rdst_bit](Core::System& system, u32) {
+                     auto& state = system.GetSerialInterfaceState().GetData();
                      state.status_reg.hex &= ~(1U << rdst_bit);
                      UpdateInterrupts();
                      return state.channel[i].in_hi.hex;
                    }),
                    MMIO::DirectWrite<u32>(&state.channel[i].in_hi.hex));
     mmio->Register(base | (SI_CHANNEL_0_IN_LO + 0xC * i),
-                   MMIO::ComplexRead<u32>([i, rdst_bit](u32) {
-                     auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+                   MMIO::ComplexRead<u32>([i, rdst_bit](Core::System& system, u32) {
+                     auto& state = system.GetSerialInterfaceState().GetData();
                      state.status_reg.hex &= ~(1U << rdst_bit);
                      UpdateInterrupts();
                      return state.channel[i].in_lo.hex;
@@ -554,8 +554,8 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
                  MMIO::DirectWrite<u32>(&state.poll.hex));
 
   mmio->Register(base | SI_COM_CSR, MMIO::DirectRead<u32>(&state.com_csr.hex),
-                 MMIO::ComplexWrite<u32>([](u32, u32 val) {
-                   auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+                 MMIO::ComplexWrite<u32>([](Core::System& system, u32, u32 val) {
+                   auto& state = system.GetSerialInterfaceState().GetData();
                    const USIComCSR tmp_com_csr(val);
 
                    state.com_csr.CHANNEL = tmp_com_csr.CHANNEL.Value();
@@ -575,7 +575,7 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
                      if (state.com_csr.TSTART)
                        CoreTiming::RemoveEvent(state.event_type_tranfer_pending);
                      state.com_csr.TSTART = 1;
-                     RunSIBuffer(0, 0);
+                     RunSIBuffer(system, 0, 0);
                    }
 
                    if (!state.com_csr.TSTART)
@@ -583,8 +583,8 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
                  }));
 
   mmio->Register(base | SI_STATUS_REG, MMIO::DirectRead<u32>(&state.status_reg.hex),
-                 MMIO::ComplexWrite<u32>([](u32, u32 val) {
-                   auto& state = Core::System::GetInstance().GetSerialInterfaceState().GetData();
+                 MMIO::ComplexWrite<u32>([](Core::System& system, u32, u32 val) {
+                   auto& state = system.GetSerialInterfaceState().GetData();
                    const USIStatusReg tmp_status(val);
 
                    // clear bits ( if (tmp.bit) SISR.bit=0 )

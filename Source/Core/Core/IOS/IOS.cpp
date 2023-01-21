@@ -616,7 +616,8 @@ std::shared_ptr<Device> EmulationKernel::GetDeviceByName(std::string_view device
 std::optional<IPCReply> Kernel::OpenDevice(OpenRequest& request)
 {
   const s32 new_fd = GetFreeDeviceID();
-  INFO_LOG_FMT(IOS, "Opening {} (mode {}, fd {})", request.path, request.flags, new_fd);
+  INFO_LOG_FMT(IOS, "Opening {} (mode {}, fd {})", request.path, static_cast<u32>(request.flags),
+               new_fd);
   if (new_fd < 0 || new_fd >= IPC_MAX_FDS)
   {
     ERROR_LOG_FMT(IOS, "Couldn't get a free fd, too many open files");
@@ -694,7 +695,7 @@ std::optional<IPCReply> Kernel::HandleIPCCommand(const Request& request)
     ret = device->IOCtlV(IOCtlVRequest{request.address});
     break;
   default:
-    ASSERT_MSG(IOS, false, "Unexpected command: {:#x}", request.command);
+    ASSERT_MSG(IOS, false, "Unexpected command: {:#x}", static_cast<u32>(request.command));
     ret = IPCReply{IPC_EINVAL, 978_tbticks};
     break;
   }
@@ -876,7 +877,7 @@ IOSC& Kernel::GetIOSC()
   return m_iosc;
 }
 
-static void FinishPPCBootstrap(u64 userdata, s64 cycles_late)
+static void FinishPPCBootstrap(Core::System& system, u64 userdata, s64 cycles_late)
 {
   // See Kernel::BootstrapPPC
   const bool is_ancast = userdata == 1;
@@ -891,18 +892,20 @@ static void FinishPPCBootstrap(u64 userdata, s64 cycles_late)
 
 void Init()
 {
-  s_event_enqueue = CoreTiming::RegisterEvent("IPCEvent", [](u64 userdata, s64) {
-    if (s_ios)
-      s_ios->HandleIPCEvent(userdata);
-  });
+  s_event_enqueue =
+      CoreTiming::RegisterEvent("IPCEvent", [](Core::System& system, u64 userdata, s64) {
+        if (s_ios)
+          s_ios->HandleIPCEvent(userdata);
+      });
 
   ESDevice::InitializeEmulationState();
 
   s_event_finish_ppc_bootstrap =
       CoreTiming::RegisterEvent("IOSFinishPPCBootstrap", FinishPPCBootstrap);
 
-  s_event_finish_ios_boot = CoreTiming::RegisterEvent(
-      "IOSFinishIOSBoot", [](u64 ios_title_id, s64) { FinishIOSBoot(ios_title_id); });
+  s_event_finish_ios_boot =
+      CoreTiming::RegisterEvent("IOSFinishIOSBoot", [](Core::System& system, u64 ios_title_id,
+                                                       s64) { FinishIOSBoot(ios_title_id); });
 
   DIDevice::s_finish_executing_di_command =
       CoreTiming::RegisterEvent("FinishDICommand", DIDevice::FinishDICommandCallback);

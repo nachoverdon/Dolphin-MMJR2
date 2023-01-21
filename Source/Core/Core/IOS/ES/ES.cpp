@@ -91,7 +91,7 @@ ESDevice::ESDevice(Kernel& ios, const std::string& device_name) : Device(ios, de
     if (result != FS::ResultCode::Success && result != FS::ResultCode::AlreadyExists)
     {
       ERROR_LOG_FMT(IOS_ES, "Failed to create {}: error {}", directory.path,
-                    FS::ConvertResult(result));
+                    static_cast<s32>(FS::ConvertResult(result)));
     }
 
     // Now update the UID/GID and other attributes.
@@ -115,13 +115,15 @@ ESDevice::ESDevice(Kernel& ios, const std::string& device_name) : Device(ios, de
 void ESDevice::InitializeEmulationState()
 {
   s_finish_init_event = CoreTiming::RegisterEvent(
-      "IOS-ESFinishInit", [](u64, s64) { GetIOS()->GetES()->FinishInit(); });
-  s_reload_ios_for_ppc_launch_event =
-      CoreTiming::RegisterEvent("IOS-ESReloadIOSForPPCLaunch", [](u64 ios_id, s64) {
+      "IOS-ESFinishInit", [](Core::System& system, u64, s64) { GetIOS()->GetES()->FinishInit(); });
+  s_reload_ios_for_ppc_launch_event = CoreTiming::RegisterEvent(
+      "IOS-ESReloadIOSForPPCLaunch", [](Core::System& system, u64 ios_id, s64) {
         GetIOS()->GetES()->LaunchTitle(ios_id, HangPPC::Yes);
       });
-  s_bootstrap_ppc_for_launch_event = CoreTiming::RegisterEvent(
-      "IOS-ESBootstrapPPCForLaunch", [](u64, s64) { GetIOS()->GetES()->BootstrapPPC(); });
+  s_bootstrap_ppc_for_launch_event =
+      CoreTiming::RegisterEvent("IOS-ESBootstrapPPCForLaunch", [](Core::System& system, u64, s64) {
+        GetIOS()->GetES()->BootstrapPPC();
+      });
 }
 
 void ESDevice::FinalizeEmulationState()
@@ -1058,7 +1060,8 @@ ReturnCode ESDevice::VerifyContainer(VerifyContainerType type, VerifyMode mode,
   ret = iosc.ImportCertificate(ca_cert, IOSC::HANDLE_ROOT_KEY, ca_handle, PID_ES);
   if (ret != IPC_SUCCESS)
   {
-    ERROR_LOG_FMT(IOS_ES, "VerifyContainer: IOSC_ImportCertificate(ca) failed with error {}", ret);
+    ERROR_LOG_FMT(IOS_ES, "VerifyContainer: IOSC_ImportCertificate(ca) failed with error {}",
+                  static_cast<s32>(ret));
     return ret;
   }
 
@@ -1073,7 +1076,7 @@ ReturnCode ESDevice::VerifyContainer(VerifyContainerType type, VerifyMode mode,
   if (ret != IPC_SUCCESS)
   {
     ERROR_LOG_FMT(IOS_ES, "VerifyContainer: IOSC_ImportCertificate(issuer) failed with error {}",
-                  ret);
+                  static_cast<s32>(ret));
     return ret;
   }
 
@@ -1082,7 +1085,8 @@ ReturnCode ESDevice::VerifyContainer(VerifyContainerType type, VerifyMode mode,
   ret = iosc.VerifyPublicKeySign(signed_blob.GetSha1(), issuer_handle, signature, PID_ES);
   if (ret != IPC_SUCCESS)
   {
-    ERROR_LOG_FMT(IOS_ES, "VerifyContainer: IOSC_VerifyPublicKeySign failed with error {}", ret);
+    ERROR_LOG_FMT(IOS_ES, "VerifyContainer: IOSC_VerifyPublicKeySign failed with error {}",
+                  static_cast<s32>(ret));
     return ret;
   }
 
@@ -1092,12 +1096,13 @@ ReturnCode ESDevice::VerifyContainer(VerifyContainerType type, VerifyMode mode,
     if (ret != IPC_SUCCESS)
     {
       ERROR_LOG_FMT(IOS_ES, "VerifyContainer: Writing the issuer cert failed with return code {}",
-                    ret);
+                    static_cast<s32>(ret));
     }
 
     ret = WriteNewCertToStore(ca_cert);
     if (ret != IPC_SUCCESS)
-      ERROR_LOG_FMT(IOS_ES, "VerifyContainer: Writing the CA cert failed with return code {}", ret);
+      ERROR_LOG_FMT(IOS_ES, "VerifyContainer: Writing the CA cert failed with return code {}",
+                    static_cast<s32>(ret));
   }
 
   if (ret == IPC_SUCCESS && issuer_handle_out)

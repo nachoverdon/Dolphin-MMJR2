@@ -16,13 +16,37 @@
 // inside callback:
 //   ScheduleEvent(periodInCycles - cyclesLate, callback, "whatever")
 
+#include <memory>
 #include <string>
+
 #include "Common/CommonTypes.h"
 
 class PointerWrap;
 
+namespace Core
+{
+class System;
+}
+
 namespace CoreTiming
 {
+class CoreTimingState
+{
+public:
+  CoreTimingState();
+  CoreTimingState(const CoreTimingState&) = delete;
+  CoreTimingState(CoreTimingState&&) = delete;
+  CoreTimingState& operator=(const CoreTimingState&) = delete;
+  CoreTimingState& operator=(CoreTimingState&&) = delete;
+  ~CoreTimingState();
+
+  struct Data;
+  Data& GetData() { return *m_data; }
+
+private:
+  std::unique_ptr<Data> m_data;
+};
+
 // These really shouldn't be global, but jit64 accesses them directly
 struct Globals
 {
@@ -32,14 +56,13 @@ struct Globals
   u64 fake_TB_start_ticks;
   float last_OC_factor_inverted;
 };
-extern Globals g;
 
 // CoreTiming begins at the boundary of timing slice -1. An initial call to Advance() is
 // required to end slice -1 and start slice 0 before the first cycle of code is executed.
 void Init();
 void Shutdown();
 
-typedef void (*TimedCallback)(u64 userdata, s64 cyclesLate);
+typedef void (*TimedCallback)(Core::System& system, u64 userdata, s64 cyclesLate);
 
 // This should only be called from the CPU thread, if you are calling it any other thread, you are
 // doing something evil

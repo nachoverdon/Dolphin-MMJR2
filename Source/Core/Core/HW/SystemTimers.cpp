@@ -100,7 +100,7 @@ std::mutex s_emu_to_real_time_mutex;
 u64 s_time_spent_sleeping;
 
 // DSP/CPU timeslicing.
-void DSPCallback(u64 userdata, s64 cyclesLate)
+void DSPCallback(Core::System& system, u64 userdata, s64 cyclesLate)
 {
   // splits up the cycle budget in case lle is used
   // for hle, just gives all of the slice to hle
@@ -115,13 +115,13 @@ int GetAudioDMACallbackPeriod()
          (Mixer::FIXED_SAMPLE_RATE_DIVIDEND * 4 / 32);
 }
 
-void AudioDMACallback(u64 userdata, s64 cyclesLate)
+void AudioDMACallback(Core::System& system, u64 userdata, s64 cyclesLate)
 {
   DSP::UpdateAudioDMA();  // Push audio to speakers.
   CoreTiming::ScheduleEvent(GetAudioDMACallbackPeriod() - cyclesLate, et_AudioDMA);
 }
 
-void IPC_HLE_UpdateCallback(u64 userdata, s64 cyclesLate)
+void IPC_HLE_UpdateCallback(Core::System& system, u64 userdata, s64 cyclesLate)
 {
   if (SConfig::GetInstance().bWii)
   {
@@ -130,19 +130,19 @@ void IPC_HLE_UpdateCallback(u64 userdata, s64 cyclesLate)
   }
 }
 
-void VICallback(u64 userdata, s64 cyclesLate)
+void VICallback(Core::System& system, u64 userdata, s64 cyclesLate)
 {
   VideoInterface::Update(CoreTiming::GetTicks() - cyclesLate);
   CoreTiming::ScheduleEvent(VideoInterface::GetTicksPerHalfLine() - cyclesLate, et_VI);
 }
 
-void DecrementerCallback(u64 userdata, s64 cyclesLate)
+void DecrementerCallback(Core::System& system, u64 userdata, s64 cyclesLate)
 {
   PowerPC::ppcState.spr[SPR_DEC] = 0xFFFFFFFF;
   PowerPC::ppcState.Exceptions |= EXCEPTION_DECREMENTER;
 }
 
-void PatchEngineCallback(u64 userdata, s64 cycles_late)
+void PatchEngineCallback(Core::System& system, u64 userdata, s64 cycles_late)
 {
   // We have 2 periods, a 1000 cycle error period and the VI period.
   // We have to carefully combine these together so that we stay on the VI period without drifting.
@@ -167,16 +167,19 @@ void PatchEngineCallback(u64 userdata, s64 cycles_late)
   CoreTiming::ScheduleEvent(next_schedule, et_PatchEngine, cycles_pruned);
 }
 
-void ThrottleCallback(u64 last_time, s64 cyclesLate)
+void ThrottleCallback(Core::System& system, u64 deadline, s64 cyclesLate)
 {
   // Allow the GPU thread to sleep. Setting this flag here limits the wakeups to 1 kHz.
   Fifo::GpuMaySleep();
 
-  u64 time = Common::Timer::NowUs();
+  const u64 time = Common::Timer::NowUs();
 
-  s64 diff = last_time - time;
+  if (deadline == 0)
+    deadline = time;
+
+  const s64 diff = deadline - time;
   const float emulation_speed = Config::Get(Config::MAIN_EMULATION_SPEED);
-  bool frame_limiter = emulation_speed > 0.0f && !Core::GetIsThrottlerTempDisabled();
+  const bool frame_limiter = emulation_speed > 0.0f && !Core::GetIsThrottlerTempDisabled();
   u32 next_event = GetTicksPerSecond() / 1000;
 
   {
@@ -186,16 +189,16 @@ void ThrottleCallback(u64 last_time, s64 cyclesLate)
         (s_emu_to_real_time_index + 1) % s_emu_to_real_time_ring_buffer.size();
   }
 
-  if (frame_limiter && !Config::Get(Config::MAIN_FAST_FORWARD_HOTKEY))
+  if (frame_limiter)
   {
     if (emulation_speed != 1.0f)
       next_event = u32(next_event * emulation_speed);
     const s64 max_fallback = Config::Get(Config::MAIN_TIMING_VARIANCE) * 1000;
     if (std::abs(diff) > max_fallback)
     {
-      DEBUG_LOG_FMT(COMMON, "system too {}, {} ms skipped", diff < 0 ? "slow" : "fast",
+      DEBUG_LOG_FMT(COMMON, "system too {}, {} us skipped", diff < 0 ? "slow" : "fast",
                     std::abs(diff) - max_fallback);
-      last_time = time - max_fallback;
+      deadline = time - max_fallback;
     }
     else if (diff > 1000)
     {
@@ -203,7 +206,9 @@ void ThrottleCallback(u64 last_time, s64 cyclesLate)
       s_time_spent_sleeping += Common::Timer::NowUs() - time;
     }
   }
-  CoreTiming::ScheduleEvent(next_event - cyclesLate, et_Throttle, last_time + 1000);
+  // reschedule 1ms (possibly scaled by emulation_speed) into future on ppc
+  // add 1ms to the deadline
+  CoreTiming::ScheduleEvent(next_event - cyclesLate, et_Throttle, deadline + 1000);
 }
 }  // namespace
 
@@ -330,7 +335,7 @@ void Init()
   CoreTiming::ScheduleEvent(VideoInterface::GetTicksPerHalfLine(), et_VI);
   CoreTiming::ScheduleEvent(0, et_DSP);
   CoreTiming::ScheduleEvent(GetAudioDMACallbackPeriod(), et_AudioDMA);
-  CoreTiming::ScheduleEvent(0, et_Throttle, Common::Timer::NowUs());
+  CoreTiming::ScheduleEvent(0, et_Throttle, 0);
 
   CoreTiming::ScheduleEvent(VideoInterface::GetTicksPerField(), et_PatchEngine);
 
