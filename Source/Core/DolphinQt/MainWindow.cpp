@@ -341,12 +341,17 @@ MainWindow::~MainWindow()
   Config::Save();
 }
 
+WindowSystemInfo MainWindow::GetWindowSystemInfo() const
+{
+  return ::GetWindowSystemInfo(m_render_widget->windowHandle());
+}
+
 void MainWindow::InitControllers()
 {
   if (g_controller_interface.IsInit())
     return;
 
-  UICommon::InitControllers(GetWindowSystemInfo(windowHandle()));
+  UICommon::InitControllers(::GetWindowSystemInfo(windowHandle()));
 
   m_hotkey_scheduler = new HotkeyScheduler();
   m_hotkey_scheduler->Start();
@@ -1104,7 +1109,7 @@ void MainWindow::StartGame(std::unique_ptr<BootParameters>&& parameters)
 
   // Boot up, show an error if it fails to load the game.
   if (!BootManager::BootCore(std::move(parameters),
-                             GetWindowSystemInfo(m_render_widget->windowHandle())))
+                             ::GetWindowSystemInfo(m_render_widget->windowHandle())))
   {
     ModalMessageBox::critical(this, tr("Error"), tr("Failed to init core"), QMessageBox::Ok);
     HideRenderWidget();
@@ -1212,7 +1217,7 @@ void MainWindow::HideRenderWidget(bool reinit, bool is_exit)
     // The controller interface will still be registered to the old render widget, if the core
     // has booted. Therefore, we should re-bind it to the main window for now. When the core
     // is next started, it will be swapped back to the new render widget.
-    g_controller_interface.ChangeWindow(GetWindowSystemInfo(windowHandle()).render_window,
+    g_controller_interface.ChangeWindow(::GetWindowSystemInfo(windowHandle()).render_window,
                                         is_exit ? ControllerInterface::WindowChangeReason::Exit :
                                                   ControllerInterface::WindowChangeReason::Other);
   }

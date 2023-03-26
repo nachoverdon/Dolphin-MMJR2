@@ -49,6 +49,7 @@ class ThreadWidget;
 class ToolBar;
 class WatchWidget;
 class WiiTASInputWindow;
+struct WindowSystemInfo;
 
 namespace DiscIO
 {
@@ -75,6 +76,7 @@ public:
   ~MainWindow();
 
   void Show();
+  WindowSystemInfo GetWindowSystemInfo() const;
 
   bool eventFilter(QObject* object, QEvent* event) override;
 
