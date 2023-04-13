@@ -604,24 +604,42 @@ void Renderer::CheckForConfigChanges()
 // Create On-Screen-Messages
 void Renderer::DrawDebugText()
 {
-  if (g_ActiveConfig.bShowFPS)
+  if (g_ActiveConfig.bShowFPS || g_ActiveConfig.bShowVPS || g_ActiveConfig.bShowSpeed)
   {
     // Position in the top-left corner of the screen.
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - (10.0f * m_backbuffer_scale),
-                                   5.0f * m_backbuffer_scale),
-                            ImGuiCond_Always, ImVec2(4.9f, 0.0f));
-	ImGui::SetNextWindowSize(ImVec2(165.0f * m_backbuffer_scale, 30.0f * m_backbuffer_scale));
-    ImGui::SetNextWindowBgAlpha(.6f);
+                                   10.f * m_backbuffer_scale),
+                            ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+	  int count = g_ActiveConfig.bShowFPS + g_ActiveConfig.bShowVPS + g_ActiveConfig.bShowSpeed;
+    ImGui::SetNextWindowSize(
+        ImVec2(94.f * m_backbuffer_scale, (12.f + 17.f * count) * m_backbuffer_scale));
 
-    if (ImGui::Begin("FPS", nullptr,
+    if (ImGui::Begin("Performance", nullptr,
                      ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs |
                          ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNav |
                          ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing))
     {
-        const Core::PerformanceStatistics& pstats = Core::GetPerformanceStatistics();
-        ImGui::TextColored(ImVec4(m_fps_counter.color[0], m_fps_counter.color[1], m_fps_counter.color[2], 1.0f),
-                           "|MMJR2| FPS:%.f | %.f%%", pstats.FPS, pstats.Speed);
+      const double fps = m_fps_counter.GetFPS();
+      const double vps = m_vps_counter.GetFPS();
+      const double speed = 100.0 * vps / VideoInterface::GetTargetRefreshRate();
+
+      // Change Color based on % Speed
+      float r = 0.0f, g = 1.0f, b = 1.0f;
+      if (g_ActiveConfig.bShowSpeedColors)
+      {
+        r = 1.0 - (speed - 80.0) / 20.0;
+        g = speed / 80.0;
+        b = (speed - 90.0) / 10.0;
+      }
+
+      if (g_ActiveConfig.bShowFPS)
+        ImGui::TextColored(ImVec4(r, g, b, 1.0f), "FPS:%7.2lf", fps);
+      if (g_ActiveConfig.bShowVPS)
+        ImGui::TextColored(ImVec4(r, g, b, 1.0f), "VPS:%7.2lf", vps);
+      if (g_ActiveConfig.bShowSpeed)
+        ImGui::TextColored(ImVec4(r, g, b, 1.0f), "Speed:%4.0lf%%", speed);
+        
     }
     ImGui::End();
   }
@@ -633,9 +651,9 @@ void Renderer::DrawDebugText()
   if (show_movie_window)
   {
     // Position under the FPS display.
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - (10.0f * m_backbuffer_scale),
-                                   50.0f * m_backbuffer_scale),
-                            ImGuiCond_FirstUseEver, ImVec2(1.0f, 0.0f));
+    ImGui::SetNextWindowPos(
+        ImVec2(ImGui::GetIO().DisplaySize.x - 10.f * m_backbuffer_scale, 80.f * m_backbuffer_scale),
+        ImGuiCond_FirstUseEver, ImVec2(1.0f, 0.0f));
     ImGui::SetNextWindowSizeConstraints(
         ImVec2(150.0f * m_backbuffer_scale, 20.0f * m_backbuffer_scale),
         ImGui::GetIO().DisplaySize);
@@ -1381,10 +1399,14 @@ void Renderer::Swap(u32 xfb_addr, u32 fb_width, u32 fb_stride, u32 fb_height, u6
     MathUtil::Rectangle<int> xfb_rect;
     const auto* xfb_entry =
         g_texture_cache->GetXFBTexture(xfb_addr, fb_width, fb_height, fb_stride, &xfb_rect);
-    if (xfb_entry &&
-        (!g_ActiveConfig.bSkipPresentingDuplicateXFBs || xfb_entry->id != m_last_xfb_id))
+    const bool is_duplicate_frame = xfb_entry->id == m_last_xfb_id;
+
+    m_vps_counter.Update();
+    if (!is_duplicate_frame)
+      m_fps_counter.Update();
+
+    if (xfb_entry && (!g_ActiveConfig.bSkipPresentingDuplicateXFBs || !is_duplicate_frame))
     {
-      const bool is_duplicate_frame = xfb_entry->id == m_last_xfb_id;
       m_last_xfb_id = xfb_entry->id;
 
       // Since we use the common pipelines here and draw vertices if a batch is currently being
@@ -1433,8 +1455,6 @@ void Renderer::Swap(u32 xfb_addr, u32 fb_width, u32 fb_stride, u32 fb_height, u6
 
       if (!is_duplicate_frame)
       {
-        m_fps_counter.Update();
-
         DolphinAnalytics::PerformanceSample perf_sample;
         perf_sample.speed_ratio = SystemTimers::GetEstimatedEmulationPerformance();
         perf_sample.num_prims = g_stats.this_frame.num_prims + g_stats.this_frame.num_dl_prims;
