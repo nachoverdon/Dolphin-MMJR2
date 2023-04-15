@@ -128,7 +128,7 @@ These folders are installed read-only and should not be changed:
 List of user folders:
 
 * `Cache`: used to cache the ISO list
-* `Config`: configuration files 
+* `Config`: configuration files
 * `Dump`: anything dumped from Dolphin
 * `GameSettings`: additional settings to be applied per-game
 * `GBA`: GBA saves
