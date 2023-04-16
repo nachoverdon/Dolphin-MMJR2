@@ -27,7 +27,6 @@
 #include "Common/Event.h"
 #include "Common/FPURoundMode.h"
 #include "Common/FatFsUtil.h"
-#include "Common/FatFsUtil.h"
 #include "Common/FileUtil.h"
 #include "Common/Flag.h"
 #include "Common/Logging/Log.h"
@@ -930,8 +929,9 @@ void UpdateTitle()
       // interested.
       static u64 ticks = 0;
       static u64 idleTicks = 0;
-      u64 newTicks = CoreTiming::GetTicks();
-      u64 newIdleTicks = CoreTiming::GetIdleTicks();
+      auto& core_timing = Core::System::GetInstance().GetCoreTiming();
+      u64 newTicks = core_timing.GetTicks();
+      u64 newIdleTicks = core_timing.GetIdleTicks();
 
       u64 diff = (newTicks - ticks) / 1000000;
       u64 idleDiff = (newIdleTicks - idleTicks) / 1000000;
