@@ -179,14 +179,17 @@ static void BPWritten(const BPCmd& bp)
     switch (bp.newvalue & 0xFF)
     {
     case 0x02:
+    {
       INCSTAT(g_stats.this_frame.num_draw_done);
       g_texture_cache->FlushEFBCopies();
       g_framebuffer_manager->InvalidatePeekCache(false);
       g_framebuffer_manager->RefreshPeekCache();
-      if (!Fifo::UseDeterministicGPUThread())
+      auto& system = Core::System::GetInstance();
+      if (!system.GetFifo().UseDeterministicGPUThread())
         PixelEngine::SetFinish();  // may generate interrupt
       DEBUG_LOG_FMT(VIDEO, "GXSetDrawDone SetPEFinish (value: {:#04X})", bp.newvalue & 0xFFFF);
       return;
+    }
 
     default:
       WARN_LOG_FMT(VIDEO, "GXSetDrawDone ??? (value {:#04X})", bp.newvalue & 0xFFFF);
@@ -194,23 +197,29 @@ static void BPWritten(const BPCmd& bp)
     }
     return;
   case BPMEM_PE_TOKEN_ID:  // Pixel Engine Token ID
+  {
     INCSTAT(g_stats.this_frame.num_token);
     g_texture_cache->FlushEFBCopies();
     g_framebuffer_manager->InvalidatePeekCache(false);
     g_framebuffer_manager->RefreshPeekCache();
-    if (!Fifo::UseDeterministicGPUThread())
+    auto& system = Core::System::GetInstance();
+    if (!system.GetFifo().UseDeterministicGPUThread())
       PixelEngine::SetToken(static_cast<u16>(bp.newvalue & 0xFFFF), false);
     DEBUG_LOG_FMT(VIDEO, "SetPEToken {:#06X}", bp.newvalue & 0xFFFF);
     return;
+  }
   case BPMEM_PE_TOKEN_INT_ID:  // Pixel Engine Interrupt Token ID
+  {
     INCSTAT(g_stats.this_frame.num_token_int);
     g_texture_cache->FlushEFBCopies();
     g_framebuffer_manager->InvalidatePeekCache(false);
     g_framebuffer_manager->RefreshPeekCache();
-    if (!Fifo::UseDeterministicGPUThread())
+    auto& system = Core::System::GetInstance();
+    if (!system.GetFifo().UseDeterministicGPUThread())
       PixelEngine::SetToken(static_cast<u16>(bp.newvalue & 0xFFFF), true);
     DEBUG_LOG_FMT(VIDEO, "SetPEToken + INT {:#06X}", bp.newvalue & 0xFFFF);
     return;
+  }
 
   // ------------------------
   // EFB copy command. This copies a rectangle from the EFB to either RAM in a texture format or to

@@ -331,7 +331,8 @@ static void RaiseEvent()
   s_event_raised = true;
 
   CoreTiming::FromThread from = CoreTiming::FromThread::NON_CPU;
-  if (!Core::System::GetInstance().IsDualCoreMode() || Fifo::UseDeterministicGPUThread())
+  auto& system = Core::System::GetInstance();
+  if (!system.IsDualCoreMode() || system.GetFifo().UseDeterministicGPUThread())
     from = CoreTiming::FromThread::CPU;
   Core::System::GetInstance().GetCoreTiming().ScheduleEvent(0, et_SetTokenFinishOnMainThread,
                                                             0, from);

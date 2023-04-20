@@ -149,14 +149,15 @@ public:
     else
     {
       m_in_display_list = true;
+      
+      auto& system = Core::System::GetInstance();
 
       if constexpr (is_preprocess)
       {
-        auto& system = Core::System::GetInstance();
         auto& memory = system.GetMemory();
         const u8* const start_address = memory.GetPointer(address);
 
-        Fifo::PushFifoAuxBuffer(start_address, size);
+        system.GetFifo().PushFifoAuxBuffer(start_address, size);
 
         if (start_address != nullptr)
         {
@@ -167,13 +168,13 @@ public:
       {
         const u8* start_address;
 
-        if (Fifo::UseDeterministicGPUThread())
+        auto& fifo = system.GetFifo();
+        if (fifo.UseDeterministicGPUThread())
         {
-          start_address = static_cast<u8*>(Fifo::PopFifoAuxBuffer(size));
+          start_address = static_cast<u8*>(fifo.PopFifoAuxBuffer(size));
         }
         else
         {
-          auto& system = Core::System::GetInstance();
           auto& memory = system.GetMemory();
           start_address = memory.GetPointer(address);
         }
