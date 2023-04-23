@@ -22,7 +22,7 @@ namespace IOS::HLE::USB
 class SkylanderUSB final : public Device
 {
 public:
-  SkylanderUSB(Kernel& ios, const std::string& device_name);
+  SkylanderUSB(EmulationKernel& ios, const std::string& device_name);
   ~SkylanderUSB();
   DeviceDescriptor GetDeviceDescriptor() const override;
   std::vector<ConfigDescriptor> GetConfigurations() const override;
@@ -42,7 +42,7 @@ public:
                         s32 expected_count, u64 expected_time_us);
 
 private:
-  Kernel& m_ios;
+  EmulationKernel& m_ios;
   u16 m_vid = 0;
   u16 m_pid = 0;
   u8 m_active_interface = 0;
