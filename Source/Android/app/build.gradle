@@ -132,7 +132,7 @@ dependencies {
 
 def getVersion() 
 {
-    return '2.0-18025'
+    return '2.1-18025'
 }
 
 
@@ -146,4 +146,4 @@ def getBuildVersionCode() {
     }
 
     return 1
-}
+}
