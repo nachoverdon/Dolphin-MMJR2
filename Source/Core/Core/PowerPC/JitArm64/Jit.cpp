@@ -24,6 +24,7 @@
 #include "Core/PowerPC/JitArm64/JitArm64_RegCache.h"
 #include "Core/PowerPC/JitInterface.h"
 #include "Core/PowerPC/Profiler.h"
+#include "Core/System.h"
 
 using namespace Arm64Gen;
 
@@ -52,7 +53,10 @@ void JitArm64::Init()
   AllocCodeSpace(CODE_SIZE + child_code_size);
   AddChildCodeSpace(&m_far_code, child_code_size);
 
-  jo.fastmem_arena = m_fastmem_enabled && Memory::InitFastmemArena();
+  auto& system = Core::System::GetInstance();
+  auto& memory = system.GetMemory();
+
+  jo.fastmem_arena = m_fastmem_enabled && memory.InitFastmemArena();
   jo.enableBlocklink = true;
   jo.optimizeGatherPipe = true;
   UpdateMemoryAndExceptionOptions();
@@ -120,7 +124,7 @@ bool JitArm64::HandleStackFault()
   Common::UnWriteProtectMemory(m_stack_base + GUARD_OFFSET, GUARD_SIZE);
 #endif
   GetBlockCache()->InvalidateICache(0, 0xffffffff, true);
-  CoreTiming::ForceExceptionCheck(0);
+  Core::System::GetInstance().GetCoreTiming().ForceExceptionCheck(0);
   m_cleanup_after_stackfault = true;
 
   return true;
@@ -153,7 +157,9 @@ void JitArm64::ResetFreeMemoryRanges()
 
 void JitArm64::Shutdown()
 {
-  Memory::ShutdownFastmemArena();
+  auto& system = Core::System::GetInstance();
+  auto& memory = system.GetMemory();
+  memory.ShutdownFastmemArena();
   FreeCodeSpace();
   blocks.Shutdown();
   FreeStack();

@@ -37,6 +37,7 @@ typedef SSIZE_T ssize_t;
 #include "Core/PowerPC/Gekko.h"
 #include "Core/PowerPC/PPCCache.h"
 #include "Core/PowerPC/PowerPC.h"
+#include "Core/System.h"
 
 namespace GDBStub
 {
@@ -128,7 +129,7 @@ static void UpdateCallback(Core::System& system, u64 userdata, s64 cycles_late)
 {
   ProcessCommands(false);
   if (IsActive())
-    CoreTiming::ScheduleEvent(GDB_UPDATE_CYCLES, s_update_event);
+    Core::System::GetInstance().GetCoreTiming().ScheduleEvent(GDB_UPDATE_CYCLES, s_update_event);
 }
 
 static u8 ReadByte()
@@ -808,7 +809,10 @@ static void ReadMemory()
 
   if (!PowerPC::HostIsRAMAddress(addr))
     return SendReply("E00");
-  u8* data = Memory::GetPointer(addr);
+  
+  auto& system = Core::System::GetInstance();
+  auto& memory = system.GetMemory();
+  u8* data = memory.GetPointer(addr);
   Mem2hex(reply, data, len);
   reply[len * 2] = '\0';
   SendReply((char*)reply);
@@ -832,7 +836,10 @@ static void WriteMemory()
 
   if (!PowerPC::HostIsRAMAddress(addr))
     return SendReply("E00");
-  u8* dst = Memory::GetPointer(addr);
+  
+  auto& system = Core::System::GetInstance();
+  auto& memory = system.GetMemory();
+  u8* dst = memory.GetPointer(addr);
   Hex2mem(dst, s_cmd_bfr + i + 1, len);
   SendReply("OK");
 }
@@ -1068,8 +1075,10 @@ static void InitGeneric(int domain, const sockaddr* server_addr, socklen_t serve
 #endif
   s_tmpsock = -1;
 
-  s_update_event = CoreTiming::RegisterEvent("GDBStubUpdate", UpdateCallback);
-  CoreTiming::ScheduleEvent(GDB_UPDATE_CYCLES, s_update_event);
+  auto& system = Core::System::GetInstance();
+  auto& core_timing = system.GetCoreTiming();
+  s_update_event = core_timing.RegisterEvent("GDBStubUpdate", UpdateCallback);
+  core_timing.ScheduleEvent(GDB_UPDATE_CYCLES, s_update_event);
   s_has_control = true;
 }
 

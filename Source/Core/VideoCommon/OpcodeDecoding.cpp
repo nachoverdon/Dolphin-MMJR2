@@ -17,6 +17,7 @@
 #include "Common/Logging/Log.h"
 #include "Core/FifoPlayer/FifoRecorder.h"
 #include "Core/HW/Memmap.h"
+#include "Core/System.h"
 #include "VideoCommon/BPMemory.h"
 #include "VideoCommon/CPMemory.h"
 #include "VideoCommon/CommandProcessor.h"
@@ -148,12 +149,15 @@ public:
     else
     {
       m_in_display_list = true;
+      
+      auto& system = Core::System::GetInstance();
 
       if constexpr (is_preprocess)
       {
-        const u8* const start_address = Memory::GetPointer(address);
+        auto& memory = system.GetMemory();
+        const u8* const start_address = memory.GetPointer(address);
 
-        Fifo::PushFifoAuxBuffer(start_address, size);
+        system.GetFifo().PushFifoAuxBuffer(start_address, size);
 
         if (start_address != nullptr)
         {
@@ -164,12 +168,18 @@ public:
       {
         const u8* start_address;
 
-        if (Fifo::UseDeterministicGPUThread())
-          start_address = static_cast<u8*>(Fifo::PopFifoAuxBuffer(size));
+        auto& fifo = system.GetFifo();
+        if (fifo.UseDeterministicGPUThread())
+        {
+          start_address = static_cast<u8*>(fifo.PopFifoAuxBuffer(size));
+        }
         else
-          start_address = Memory::GetPointer(address);
+        {
+          auto& memory = system.GetMemory();
+          start_address = memory.GetPointer(address);
+        }
 
-        // Avoid the crash if Memory::GetPointer failed ..
+        // Avoid the crash if memory.GetPointer failed ..
         if (start_address != nullptr)
         {
           // temporarily swap dl and non-dl (small "hack" for the stats)
@@ -206,7 +216,8 @@ public:
     }
     else
     {
-      CommandProcessor::HandleUnknownOpcode(opcode, data, is_preprocess);
+      Core::System::GetInstance().GetCommandProcessor().HandleUnknownOpcode(opcode, data,
+                                                                            is_preprocess);
       m_cycles += 1;
     }
   }

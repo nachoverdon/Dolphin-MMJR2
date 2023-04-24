@@ -54,7 +54,7 @@ public final class DirectoryInitialization
     directoryState.setValue(DirectoryInitializationState.INITIALIZING);
 
     // Can take a few seconds to run, so don't block UI thread.
-    ((Runnable) () -> init(context)).run();
+    new Thread(() -> init(context)).run();
   }
 
   private static void init(Context context)

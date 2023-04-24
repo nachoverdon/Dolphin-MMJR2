@@ -160,8 +160,7 @@ constexpr int DSP_MAIL_SLICE = 72;
 
 void DoState(PointerWrap& p)
 {
-  auto& system = Core::System::GetInstance();
-  auto& state = system.GetDSPState().GetData();
+  auto& state = Core::System::GetInstance().GetDSPState().GetData();
 
   if (!state.aram.wii_mode)
     p.DoArray(state.aram.ptr, state.aram.size);
@@ -195,25 +194,29 @@ DSPEmulator* GetDSPEmulator()
 
 void Init(bool hle)
 {
-  auto& state = Core::System::GetInstance().GetDSPState().GetData();
+  auto& system = Core::System::GetInstance();
+  auto& core_timing = system.GetCoreTiming();
+  auto& state = system.GetDSPState().GetData();
   Reinit(hle);
   state.event_type_generate_dsp_interrupt =
-      CoreTiming::RegisterEvent("DSPint", GenerateDSPInterrupt);
-  state.event_type_complete_aram = CoreTiming::RegisterEvent("ARAMint", CompleteARAM);
+      core_timing.RegisterEvent("DSPint", GenerateDSPInterrupt);
+  state.event_type_complete_aram = core_timing.RegisterEvent("ARAMint", CompleteARAM);
 }
 
 void Reinit(bool hle)
 {
-  auto& state = Core::System::GetInstance().GetDSPState().GetData();
+  auto& system = Core::System::GetInstance();
+  auto& state = system.GetDSPState().GetData();
   state.dsp_emulator = CreateDSPEmulator(hle);
   state.is_lle = state.dsp_emulator->IsLLE();
 
   if (SConfig::GetInstance().bWii)
   {
+    auto& memory = system.GetMemory();
     state.aram.wii_mode = true;
-    state.aram.size = Memory::GetExRamSizeReal();
-    state.aram.mask = Memory::GetExRamMask();
-    state.aram.ptr = Memory::m_pEXRAM;
+    state.aram.size = memory.GetExRamSizeReal();
+    state.aram.mask = memory.GetExRamMask();
+    state.aram.ptr = memory.GetEXRAM();
   }
   else
   {
@@ -433,7 +436,8 @@ void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
           // TODO: need hardware tests for the timing of this interrupt.
           // Sky Crawlers crashes at boot if this is scheduled less than 87 cycles in the future.
           // Other Namco games crash too, see issue 9509. For now we will just push it to 200 cycles
-          CoreTiming::ScheduleEvent(200, state.event_type_generate_dsp_interrupt, INT_AID);
+          system.GetCoreTiming().ScheduleEvent(200, state.event_type_generate_dsp_interrupt,
+                                               INT_AID);
         }
       }));
 
@@ -487,8 +491,10 @@ static void GenerateDSPInterrupt(Core::System& system, u64 DSPIntType, s64 cycle
 // CALLED FROM DSP EMULATOR, POSSIBLY THREADED
 void GenerateDSPInterruptFromDSPEmu(DSPInterruptType type, int cycles_into_future)
 {
-  auto& state = Core::System::GetInstance().GetDSPState().GetData();
-  CoreTiming::ScheduleEvent(cycles_into_future, state.event_type_generate_dsp_interrupt, type,
+  auto& system = Core::System::GetInstance();
+  auto& core_timing = system.GetCoreTiming();
+  auto& state = system.GetDSPState().GetData();
+  core_timing.ScheduleEvent(cycles_into_future, state.event_type_generate_dsp_interrupt, type,
                             CoreTiming::FromThread::ANY);
 }
 
@@ -523,7 +529,8 @@ void UpdateAudioDMA()
     // Read audio at g_audioDMA.current_source_address in RAM and push onto an
     // external audio fifo in the emulator, to be mixed with the disc
     // streaming output.
-    void* address = Memory::GetPointer(state.audio_dma.current_source_address);
+    auto& memory = system.GetMemory();
+    void* address = memory.GetPointer(state.audio_dma.current_source_address);
     AudioCommon::SendAIBuffer(system, reinterpret_cast<short*>(address), 8);
 
     if (state.audio_dma.remaining_blocks_count != 0)
@@ -548,13 +555,16 @@ void UpdateAudioDMA()
 
 static void Do_ARAM_DMA()
 {
-  auto& state = Core::System::GetInstance().GetDSPState().GetData();
+  auto& system = Core::System::GetInstance();
+  auto& core_timing = system.GetCoreTiming();
+  auto& memory = system.GetMemory();
+  auto& state = system.GetDSPState().GetData();
 
   state.dsp_control.DMAState = 1;
 
   // ARAM DMA transfer rate has been measured on real hw
   int ticksToTransfer = (state.aram_dma.Cnt.count / 32) * 246;
-  CoreTiming::ScheduleEvent(ticksToTransfer, state.event_type_complete_aram);
+  core_timing.ScheduleEvent(ticksToTransfer, state.event_type_complete_aram);
 
   // Real hardware DMAs in 32byte chunks, but we can get by with 8byte chunks
   if (state.aram_dma.Cnt.dir)
@@ -575,18 +585,18 @@ static void Do_ARAM_DMA()
         // See below in the write section for more information
         if ((state.aram_info.Hex & 0xf) == 3)
         {
-          Memory::Write_U64_Swap(*(u64*)&state.aram.ptr[state.aram_dma.ARAddr & state.aram.mask],
-                                 state.aram_dma.MMAddr);
+          memory.Write_U64_Swap(*(u64*)&state.aram.ptr[state.aram_dma.ARAddr & state.aram.mask],
+                                state.aram_dma.MMAddr);
         }
         else if ((state.aram_info.Hex & 0xf) == 4)
         {
-          Memory::Write_U64_Swap(*(u64*)&state.aram.ptr[state.aram_dma.ARAddr & state.aram.mask],
-                                 state.aram_dma.MMAddr);
+          memory.Write_U64_Swap(*(u64*)&state.aram.ptr[state.aram_dma.ARAddr & state.aram.mask],
+                                state.aram_dma.MMAddr);
         }
         else
         {
-          Memory::Write_U64_Swap(*(u64*)&state.aram.ptr[state.aram_dma.ARAddr & state.aram.mask],
-                                 state.aram_dma.MMAddr);
+          memory.Write_U64_Swap(*(u64*)&state.aram.ptr[state.aram_dma.ARAddr & state.aram.mask],
+                                state.aram_dma.MMAddr);
         }
 
         state.aram_dma.MMAddr += 8;
@@ -598,7 +608,7 @@ static void Do_ARAM_DMA()
     {
       while (state.aram_dma.Cnt.count)
       {
-        Memory::Write_U64(HSP::Read(state.aram_dma.ARAddr), state.aram_dma.MMAddr);
+        memory.Write_U64(HSP::Read(state.aram_dma.ARAddr), state.aram_dma.MMAddr);
         state.aram_dma.MMAddr += 8;
         state.aram_dma.ARAddr += 8;
         state.aram_dma.Cnt.count -= 8;
@@ -622,22 +632,22 @@ static void Do_ARAM_DMA()
         if ((state.aram_info.Hex & 0xf) == 3)
         {
           *(u64*)&state.aram.ptr[state.aram_dma.ARAddr & state.aram.mask] =
-              Common::swap64(Memory::Read_U64(state.aram_dma.MMAddr));
+              Common::swap64(memory.Read_U64(state.aram_dma.MMAddr));
         }
         else if ((state.aram_info.Hex & 0xf) == 4)
         {
           if (state.aram_dma.ARAddr < 0x400000)
           {
             *(u64*)&state.aram.ptr[(state.aram_dma.ARAddr + 0x400000) & state.aram.mask] =
-                Common::swap64(Memory::Read_U64(state.aram_dma.MMAddr));
+                Common::swap64(memory.Read_U64(state.aram_dma.MMAddr));
           }
           *(u64*)&state.aram.ptr[state.aram_dma.ARAddr & state.aram.mask] =
-              Common::swap64(Memory::Read_U64(state.aram_dma.MMAddr));
+              Common::swap64(memory.Read_U64(state.aram_dma.MMAddr));
         }
         else
         {
           *(u64*)&state.aram.ptr[state.aram_dma.ARAddr & state.aram.mask] =
-              Common::swap64(Memory::Read_U64(state.aram_dma.MMAddr));
+              Common::swap64(memory.Read_U64(state.aram_dma.MMAddr));
         }
 
         state.aram_dma.MMAddr += 8;
@@ -649,7 +659,7 @@ static void Do_ARAM_DMA()
     {
       while (state.aram_dma.Cnt.count)
       {
-        HSP::Write(state.aram_dma.ARAddr, Memory::Read_U64(state.aram_dma.MMAddr));
+        HSP::Write(state.aram_dma.ARAddr, memory.Read_U64(state.aram_dma.MMAddr));
 
         state.aram_dma.MMAddr += 8;
         state.aram_dma.ARAddr += 8;
@@ -664,14 +674,20 @@ static void Do_ARAM_DMA()
 // (LM) It just means that DSP reads via '0xffdd' on Wii can end up in EXRAM or main RAM
 u8 ReadARAM(u32 address)
 {
-  auto& state = Core::System::GetInstance().GetDSPState().GetData();
+  auto& system = Core::System::GetInstance();
+  auto& state = system.GetDSPState().GetData();
 
   if (state.aram.wii_mode)
   {
     if (address & 0x10000000)
+    {
       return state.aram.ptr[address & state.aram.mask];
+    }
     else
-      return Memory::Read_U8(address & Memory::GetRamMask());
+    {
+      auto& memory = system.GetMemory();
+      return memory.Read_U8(address & memory.GetRamMask());
+    }
   }
   else
   {

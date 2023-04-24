@@ -13,10 +13,13 @@
 #include "Core/HW/DVD/DVDInterface.h"
 #include "Core/HW/DVD/DVDThread.h"
 #include "Core/HW/EXI/EXI.h"
+#include "Core/HW/Memmap.h"
 #include "Core/HW/MemoryInterface.h"
 #include "Core/HW/SI/SI.h"
 #include "Core/HW/Sram.h"
 #include "Core/HW/VideoInterface.h"
+#include "VideoCommon/CommandProcessor.h"
+#include "VideoCommon/Fifo.h"
 
 namespace Core
 {
@@ -27,12 +30,14 @@ struct System::Impl
   bool m_audio_dump_started = false;
 
   AudioInterface::AudioInterfaceState m_audio_interface_state;
-  CoreTiming::CoreTimingState m_core_timing_state;
-  CoreTiming::Globals m_core_timing_globals;
+  CoreTiming::CoreTimingManager m_core_timing;
+  CommandProcessor::CommandProcessorManager m_command_processor;
   DSP::DSPState m_dsp_state;
   DVDInterface::DVDInterfaceState m_dvd_interface_state;
   DVDThread::DVDThreadState m_dvd_thread_state;
   ExpansionInterface::ExpansionInterfaceState m_expansion_interface_state;
+  Fifo::FifoManager m_fifo;
+  Memory::MemoryManager m_memory;
   MemoryInterface::MemoryInterfaceState m_memory_interface_state;
   SerialInterface::SerialInterfaceState m_serial_interface_state;
   Sram m_sram;
@@ -87,14 +92,14 @@ AudioInterface::AudioInterfaceState& System::GetAudioInterfaceState() const
   return m_impl->m_audio_interface_state;
 }
 
-CoreTiming::CoreTimingState& System::GetCoreTimingState() const
+CoreTiming::CoreTimingManager& System::GetCoreTiming() const
 {
-  return m_impl->m_core_timing_state;
+  return m_impl->m_core_timing;
 }
 
-CoreTiming::Globals& System::GetCoreTimingGlobals() const
+CommandProcessor::CommandProcessorManager& System::GetCommandProcessor() const
 {
-  return m_impl->m_core_timing_globals;
+  return m_impl->m_command_processor;
 }
 
 DSP::DSPState& System::GetDSPState() const
@@ -115,6 +120,16 @@ DVDThread::DVDThreadState& System::GetDVDThreadState() const
 ExpansionInterface::ExpansionInterfaceState& System::GetExpansionInterfaceState() const
 {
   return m_impl->m_expansion_interface_state;
+}
+
+Fifo::FifoManager& System::GetFifo() const
+{
+  return m_impl->m_fifo;
+}
+
+Memory::MemoryManager& System::GetMemory() const
+{
+  return m_impl->m_memory;
 }
 
 MemoryInterface::MemoryInterfaceState& System::GetMemoryInterfaceState() const

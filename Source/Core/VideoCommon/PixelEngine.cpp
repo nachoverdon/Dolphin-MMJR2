@@ -201,8 +201,8 @@ void Init()
   s_signal_token_interrupt = false;
   s_signal_finish_interrupt = false;
 
-  et_SetTokenFinishOnMainThread =
-      CoreTiming::RegisterEvent("SetTokenFinish", SetTokenFinish_OnMainThread);
+  et_SetTokenFinishOnMainThread = Core::System::GetInstance().GetCoreTiming().RegisterEvent(
+      "SetTokenFinish", SetTokenFinish_OnMainThread);
 }
 
 void RegisterMMIO(MMIO::Mapping* mmio, u32 base)
@@ -331,9 +331,11 @@ static void RaiseEvent()
   s_event_raised = true;
 
   CoreTiming::FromThread from = CoreTiming::FromThread::NON_CPU;
-  if (!Core::System::GetInstance().IsDualCoreMode() || Fifo::UseDeterministicGPUThread())
+  auto& system = Core::System::GetInstance();
+  if (!system.IsDualCoreMode() || system.GetFifo().UseDeterministicGPUThread())
     from = CoreTiming::FromThread::CPU;
-  CoreTiming::ScheduleEvent(0, et_SetTokenFinishOnMainThread, 0, from);
+  Core::System::GetInstance().GetCoreTiming().ScheduleEvent(0, et_SetTokenFinishOnMainThread,
+                                                            0, from);
 }
 
 // SetToken

@@ -27,7 +27,6 @@
 #include "Common/Event.h"
 #include "Common/FPURoundMode.h"
 #include "Common/FatFsUtil.h"
-#include "Common/FatFsUtil.h"
 #include "Common/FileUtil.h"
 #include "Common/Flag.h"
 #include "Common/Logging/Log.h"
@@ -280,7 +279,9 @@ void Stop()  // - Hammertime!
   // Dump left over jobs
   HostDispatchJobs();
 
-  Fifo::EmulatorState(false);
+  auto& system = Core::System::GetInstance();
+
+  system.GetFifo().EmulatorState(false);
 
   INFO_LOG_FMT(CONSOLE, "Stop [Main Thread]\t\t---- Shutting down ----");
 
@@ -288,7 +289,7 @@ void Stop()  // - Hammertime!
   INFO_LOG_FMT(CONSOLE, "{}", StopMessage(true, "Stop CPU"));
   CPU::Stop();
 
-  if (Core::System::GetInstance().IsDualCoreMode())
+  if (system.IsDualCoreMode())
   {
     // Video_EnterLoop() should now exit so that EmuThread()
     // will continue concurrently with the rest of the commands
@@ -587,7 +588,7 @@ static void EmuThread(std::unique_ptr<BootParameters> boot, WindowSystemInfo wsi
   if (SConfig::GetInstance().bWii)
     savegame_redirect = DiscIO::Riivolution::ExtractSavegameRedirect(boot->riivolution_patches);
 
-  if (!CBoot::BootUp(std::move(boot)))
+  if (!CBoot::BootUp(system, std::move(boot)))
     return;
 
   // Initialise Wii filesystem contents.
@@ -603,7 +604,7 @@ static void EmuThread(std::unique_ptr<BootParameters> boot, WindowSystemInfo wsi
     wiifs_guard.Dismiss();
 
   // This adds the SyncGPU handler to CoreTiming, so now CoreTiming::Advance might block.
-  Fifo::Prepare();
+  system.GetFifo().Prepare(system);
 
   // Setup our core, but can't use dynarec if we are compare server
   if (Config::Get(Config::MAIN_CPU_CORE) != PowerPC::CPUCore::Interpreter)
@@ -628,7 +629,7 @@ static void EmuThread(std::unique_ptr<BootParameters> boot, WindowSystemInfo wsi
     s_cpu_thread = std::thread(cpuThreadFunc, savestate_path, delete_savestate);
 
     // become the GPU thread
-    Fifo::RunGpuLoop();
+    system.GetFifo().RunGpuLoop(system);
 
     // We have now exited the Video Loop
     INFO_LOG_FMT(CONSOLE, "{}", StopMessage(false, "Video Loop Ended"));
@@ -772,7 +773,8 @@ static bool PauseAndLock(bool do_lock, bool unpause_on_unlock)
 
   // video has to come after CPU, because CPU thread can wait for video thread
   // (s_efbAccessRequested).
-  Fifo::PauseAndLock(do_lock, false);
+  auto& system = Core::System::GetInstance();
+  system.GetFifo().PauseAndLock(system, do_lock, false);
 
   ResetRumble();
 
@@ -898,9 +900,9 @@ const PerformanceStatistics& GetPerformanceStatistics()
 
 void UpdateTitle()
 {
-  float FPS = g_perf_metrics.GetFPS();
-  float VPS = g_perf_metrics.GetVPS();
-  float Speed = g_perf_metrics.GetSpeed();
+  const double FPS = g_perf_metrics.GetFPS();
+  const double VPS = g_perf_metrics.GetVPS();
+  const double Speed = 100.0 * g_perf_metrics.GetSpeed();
 
   // Settings are shown the same for both extended and summary info
   const std::string SSettings = fmt::format(
@@ -930,8 +932,9 @@ void UpdateTitle()
       // interested.
       static u64 ticks = 0;
       static u64 idleTicks = 0;
-      u64 newTicks = CoreTiming::GetTicks();
-      u64 newIdleTicks = CoreTiming::GetIdleTicks();
+      auto& core_timing = Core::System::GetInstance().GetCoreTiming();
+      u64 newTicks = core_timing.GetTicks();
+      u64 newIdleTicks = core_timing.GetIdleTicks();
 
       u64 diff = (newTicks - ticks) / 1000000;
       u64 idleDiff = (newIdleTicks - idleTicks) / 1000000;
@@ -1023,7 +1026,10 @@ void UpdateWantDeterminism(bool initial)
       const auto ios = IOS::HLE::GetIOS();
       if (ios)
         ios->UpdateWantDeterminism(new_want_determinism);
-      Fifo::UpdateWantDeterminism(new_want_determinism);
+      
+      auto& system = Core::System::GetInstance();
+      system.GetFifo().UpdateWantDeterminism(system, new_want_determinism);
+      
       // We need to clear the cache because some parts of the JIT depend on want_determinism,
       // e.g. use of FMA.
       JitInterface::ClearCache();
