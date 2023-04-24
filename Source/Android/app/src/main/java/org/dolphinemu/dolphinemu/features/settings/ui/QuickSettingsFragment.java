@@ -173,6 +173,8 @@ public class QuickSettingsFragment extends Fragment implements SettingsFragmentV
             R.string.efb_copy_method, 0));
     sl.add(new CheckBoxSetting(context,BooleanSetting.GFX_HACK_DEFER_EFB_COPIES,
             R.string.defer_efb_copies, 0));
+    sl.add(new CheckBoxSetting(context, BooleanSetting.GFX_HACK_VI_SKIP, R.string.vi_skip,
+            R.string.vi_skip_description));
     //sl.add(new InvertedCheckBoxSetting(context, BooleanSetting.GFX_HACK_BBOX_ENABLE,R.string.disable_bbox, 0));
 
     mSettingsList = sl;
