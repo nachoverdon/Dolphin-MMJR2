@@ -100,7 +100,7 @@ public final class DirectoryInitialization
       File externalPath = Environment.getExternalStorageDirectory();
       if (externalPath != null)
       {
-        userPath = externalPath.getAbsolutePath() + "/mmjr-revamp";
+        userPath = externalPath.getAbsolutePath() + "/mmjr2-vbi";
         Log.debug("[DirectoryInitialization] User Dir: " + userPath);
         NativeLibrary.SetUserDirectory(userPath);
         return true;
