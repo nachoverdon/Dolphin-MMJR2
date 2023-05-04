@@ -74,7 +74,7 @@ public class GameFile
   public String getCoverPath(Context context)
   {
     return Environment.getExternalStorageDirectory().getPath() +
-            "/mmjr-revamp/Cache/GameCovers/" + getGameTdbId() + ".png";
+            "/mmjr2-vbi/Cache/GameCovers/" + getGameTdbId() + ".png";
   }
 
   public String getCustomCoverPath()
