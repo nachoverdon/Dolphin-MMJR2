@@ -54,9 +54,15 @@ namespace DSP::HLE
 
     constexpr u32 SAMPLE_RATE = 48000;
 
+bool ASndUCode::SwapLeftRight() const
+{
+  return m_crc == HASH_DESERT_BUS_2011 || m_crc == HASH_DESERT_BUS_2012;
+}
+
 bool ASndUCode::UseNewFlagMasks() const
 {
-  return m_crc == HASH_2011 || m_crc == HASH_2020 || m_crc == HASH_2020_PAD;
+  return m_crc == HASH_2011 || m_crc == HASH_2020 || m_crc == HASH_2020_PAD ||
+         m_crc == HASH_DESERT_BUS_2011 || m_crc == HASH_DESERT_BUS_2012;
 }
 
 
@@ -384,7 +390,13 @@ void ASndUCode::DoMixing(u32 return_mail)
                 }
                 // Both paths jmpr $AR3, which is an index into sample_selector
 
-                const auto [new_r, new_l] = (this->*sample_function)();
+                auto [new_r, new_l] = (this->*sample_function)();
+                if (SwapLeftRight())
+                {
+                // The Desert Bus versions swapped the left and right input channels so that left
+                // comes first, and then right. Before, right came before left.
+                std::swap(new_r, new_l);
+                }
                 // out_samp: "multiply sample x volume" - left is put in $ax0.h, right is put in $ax1.h
 
                 // All functions jumped to from sample_selector jump or fall through here (zero_samples also
