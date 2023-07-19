@@ -539,7 +539,7 @@ void MemoryViewWidget::UpdateBreakpointTags()
       }
       else
       {
-        cell->setBackground(Qt::white);
+        cell->setBackground(Qt::transparent);
       }
     }
 
