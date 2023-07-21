@@ -281,7 +281,7 @@
 
     <!-- FSAA Preference -->
     <string-array name="FSAAEntries" translatable="false">
-        <item>Off</item>
+        <item>Default</item>
         <item>2x</item>
         <item>4x</item>
         <item>8x</item>
@@ -291,6 +291,18 @@
         <item>2</item>
         <item>4</item>
         <item>8</item>
+    </integer-array>
+
+     <!-- Texture Filtering Preference -->
+    <string-array name="textureFilteringEntries">
+        <item>Default</item>
+        <item>Force Nearest</item>
+        <item>Force Linear</item>
+    </string-array>
+    <integer-array name="textureFilteringValues">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
     </integer-array>
 
     <!-- Anisotropic Filtering Preference -->
