@@ -54,7 +54,6 @@
 #include "Core/Movie.h"
 #include "Core/System.h"
 
-
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 
 #include "VideoCommon/AbstractFramebuffer.h"
@@ -231,14 +230,14 @@ bool Renderer::IsBBoxEnabled() const
   return m_bounding_box->IsEnabled();
 }
 
-void Renderer::BBoxEnable()
+void Renderer::BBoxEnable(PixelShaderManager& pixel_shader_manager)
 {
-  m_bounding_box->Enable();
+  m_bounding_box->Enable(pixel_shader_manager);
 }
 
-void Renderer::BBoxDisable()
+void Renderer::BBoxDisable(PixelShaderManager& pixel_shader_manager)
 {
-  m_bounding_box->Disable();
+  m_bounding_box->Disable(pixel_shader_manager);
 }
 
 u16 Renderer::BBoxRead(u32 index)
@@ -436,7 +435,9 @@ bool Renderer::CalculateTargetSize()
   {
     m_target_width = new_efb_width;
     m_target_height = new_efb_height;
-    PixelShaderManager::SetEfbScaleChanged(EFBToScaledXf(1), EFBToScaledYf(1));
+    auto& system = Core::System::GetInstance();
+    auto& pixel_shader_manager = system.GetPixelShaderManager();
+    pixel_shader_manager.SetEfbScaleChanged(EFBToScaledXf(1), EFBToScaledYf(1));
     return true;
   }
   return false;
