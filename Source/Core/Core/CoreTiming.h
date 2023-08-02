@@ -187,6 +187,8 @@ private:
   s64 m_throttle_min_clock_per_sleep;
   bool m_throttle_disable_vi_int = false;
 
+  void ResetThrottle(s64 cycle);
+
   int DowncountToCycles(int downcount) const;
   int CyclesToDowncount(int cycles) const;
 };
