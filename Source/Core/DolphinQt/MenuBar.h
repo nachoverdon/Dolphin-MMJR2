@@ -55,6 +55,7 @@ signals:
   void Exit();
   void ChangeDisc();
   void EjectDisc();
+  void OpenUserFolder();
 
   // Emulation
   void Play();
@@ -192,6 +193,7 @@ private:
   QAction* m_change_disc;
   QAction* m_eject_disc;
   QMenu* m_backup_menu;
+  QAction* m_open_user_folder;
 
   // Tools
   QAction* m_wad_install_action;

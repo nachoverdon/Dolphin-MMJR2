@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDateTime>
+#include <QDesktopServices>
 #include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -484,6 +485,7 @@ void MainWindow::ConnectMenuBar()
   connect(m_menu_bar, &MenuBar::Exit, this, &MainWindow::close);
   connect(m_menu_bar, &MenuBar::EjectDisc, this, &MainWindow::EjectDisc);
   connect(m_menu_bar, &MenuBar::ChangeDisc, this, &MainWindow::ChangeDisc);
+  connect(m_menu_bar, &MenuBar::OpenUserFolder, this, &MainWindow::OpenUserFolder);
 
   // Emulation
   connect(m_menu_bar, &MenuBar::Pause, this, &MainWindow::Pause);
@@ -754,6 +756,14 @@ void MainWindow::ChangeDisc()
 void MainWindow::EjectDisc()
 {
   Core::RunAsCPUThread([] { DVDInterface::EjectDisc(DVDInterface::EjectCause::User); });
+}
+
+void MainWindow::OpenUserFolder()
+{
+  std::string path = File::GetUserPath(D_USER_IDX);
+
+  QUrl url = QUrl::fromLocalFile(QString::fromStdString(path));
+  QDesktopServices::openUrl(url);
 }
 
 void MainWindow::Open()
