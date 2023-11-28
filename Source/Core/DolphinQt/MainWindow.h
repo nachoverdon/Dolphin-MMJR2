@@ -42,6 +42,7 @@ class RegisterWidget;
 class RenderWidget;
 class SearchBar;
 class SettingsWindow;
+class SkylanderPortalWindow;
 class ThreadWidget;
 class ToolBar;
 class WatchWidget;
@@ -158,6 +159,7 @@ private:
   void ShowNetPlaySetupDialog();
   void ShowNetPlayBrowser();
   void ShowFIFOPlayer();
+  void ShowSkylanderPortal();
   void ShowMemcardManager();
   void ShowResourcePackManager();
   void ShowCheatsManager();
@@ -221,6 +223,7 @@ private:
   SettingsWindow* m_settings_window = nullptr;
   GraphicsWindow* m_graphics_window = nullptr;
   FIFOPlayerWindow* m_fifo_window = nullptr;
+  SkylanderPortalWindow* m_skylander_window = nullptr;
   MappingWindow* m_hotkey_window = nullptr;
   FreeLookWindow* m_freelook_window = nullptr;
 
