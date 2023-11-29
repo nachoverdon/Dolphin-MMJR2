@@ -2522,10 +2522,10 @@ void TextureCacheBase::UninitializeXFBMemory(u8* dst, u32 stride, u32 bytes_per_
   // was still a desire to differentiate between the old and the new approach
   // which is why we still set uninitialized xfb memory to fuchsia
   // (Y=1,U=254,V=254) instead of dark green (Y=0,U=0,V=0) in YUV
-  // like is done in the EFB path.
+  // like is done in the EFB path. MMJR2-VBI sets it to black (Y=0,U=128,V=128)
 
 #if defined(_M_X86) || defined(_M_X86_64)
-  __m128i sixteenBytes = _mm_set1_epi16((s16)(u16)0xFE01);
+  __m128i sixteenBytes = _mm_set1_epi16((s16)(u16)0x8080);
 #endif
 
   for (u32 i = 0; i < num_blocks_y; i++)
@@ -2544,11 +2544,11 @@ void TextureCacheBase::UninitializeXFBMemory(u8* dst, u32 stride, u32 bytes_per_
     {
       if (offset & 1)
       {
-        rowdst[offset] = 254;
+        rowdst[offset] = 128; // U and V components
       }
       else
       {
-        rowdst[offset] = 1;
+        rowdst[offset] = 0; //Y component
       }
     }
     dst += stride;
