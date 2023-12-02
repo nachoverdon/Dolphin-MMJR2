@@ -21,7 +21,7 @@ static std::string MakeAbsolute(const std::string& directory, const std::string&
 #ifdef _WIN32
   return PathToString(StringToPath(directory) / StringToPath(path));
 #else
-  if (StringBeginsWith(path, "/"))
+  if (path.starts_with('/'))
     return path;
   return directory + "/" + path;
 #endif
