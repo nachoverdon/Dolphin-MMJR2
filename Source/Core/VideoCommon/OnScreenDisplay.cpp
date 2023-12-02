@@ -24,7 +24,7 @@
 
 namespace OSD
 {
-constexpr float LEFT_MARGIN = 150.0f;        // Pixels to the left of OSD messages.
+constexpr float LEFT_MARGIN = 5.0f;        // Pixels to the left of OSD messages.
 constexpr float TOP_MARGIN = 5.0f;           // Pixels above the first OSD message.
 constexpr float WINDOW_PADDING = 4.0f;       // Pixels between subsequent OSD messages.
 constexpr float MESSAGE_FADE_TIME = 1000.f;  // Ms to fade OSD messages at the end of their life.
