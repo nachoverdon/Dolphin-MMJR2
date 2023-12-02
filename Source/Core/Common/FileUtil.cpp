@@ -26,7 +26,6 @@
 #endif
 #include "Common/IOFile.h"
 #include "Common/Logging/Log.h"
-#include "Common/StringUtil.h"
 
 #ifdef _WIN32
 #include <windows.h>
