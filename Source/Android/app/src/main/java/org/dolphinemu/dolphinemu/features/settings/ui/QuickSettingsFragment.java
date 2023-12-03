@@ -179,6 +179,9 @@ public class QuickSettingsFragment extends Fragment implements SettingsFragmentV
             R.string.vi_skip, 0));
     //sl.add(new InvertedCheckBoxSetting(context, BooleanSetting.GFX_HACK_BBOX_ENABLE,R.string.disable_bbox, 0));
 
+    // Graphics Settings
+    sl.add(new CheckBoxSetting(context, BooleanSetting.GFX_SHOW_FPS, R.string.show_fps,0));
+
     mSettingsList = sl;
   }
 }
