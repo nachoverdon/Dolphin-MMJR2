@@ -1083,6 +1083,13 @@ bool Renderer::InitializeImGui()
 
 bool Renderer::RecompileImGuiPipeline()
 {
+  if (m_backbuffer_format == AbstractTextureFormat::Undefined)
+  {
+    // No backbuffer (nogui) means no imgui rendering will happen
+    // Some backends don't like making pipelines with no render targets
+    return true;
+  }
+  
   std::unique_ptr<AbstractShader> vertex_shader =
       CreateShaderFromSource(ShaderStage::Vertex, FramebufferShaderGen::GenerateImGuiVertexShader(),
                              "ImGui vertex shader");
