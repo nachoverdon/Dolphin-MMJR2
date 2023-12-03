@@ -86,6 +86,7 @@
 #include "VideoCommon/Fifo.h"
 #include "VideoCommon/HiresTextures.h"
 #include "VideoCommon/OnScreenDisplay.h"
+#include "VideoCommon/PerformanceMetrics.h"
 #include "VideoCommon/RenderBase.h"
 #include "VideoCommon/VideoBackendBase.h"
 
@@ -98,8 +99,6 @@ namespace Core
 static bool s_wants_determinism;
 
 // Declarations and definitions
-static PerformanceStatistics perf_stats;
-
 static bool s_is_stopping = false;
 static bool s_hardware_initialized = false;
 static bool s_is_started = false;
@@ -241,9 +240,6 @@ bool Init(std::unique_ptr<BootParameters> boot, const WindowSystemInfo& wsi)
 
   // Issue any API calls which must occur on the main thread for the graphics backend.
   WindowSystemInfo prepared_wsi(wsi);
-
-  static PerformanceStatistics perf_stats;
-
   g_video_backend->PrepareWindow(prepared_wsi);
 
   // Start the emu thread
@@ -870,12 +866,6 @@ void Callback_NewField()
     }
   }
 }
-
-const PerformanceStatistics& GetPerformanceStatistics()
-{
-    return perf_stats;
-}
-
 
 void UpdateTitle()
 {
