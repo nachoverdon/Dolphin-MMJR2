@@ -141,7 +141,7 @@ dependencies {
 
 def getVersion()
 {
-    return '2.2.000'
+    return '2.2.100-dev'
 }
 
 
