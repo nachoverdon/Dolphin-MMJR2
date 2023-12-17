@@ -157,6 +157,7 @@ void AdvancedWidget::CreateWidgets()
   m_backend_multithreading =
       new GraphicsBool(tr("Backend Multithreading"), Config::GFX_BACKEND_MULTITHREADING);
   m_prefer_vs_for_point_line_expansion = new GraphicsBool(
+      // i18n: VS is short for vertex shaders.
       tr("Prefer VS for Point/Line Expansion"), Config::GFX_PREFER_VS_FOR_LINE_POINT_EXPANSION);
   m_cpu_cull = new GraphicsBool(tr("Cull Vertices on the CPU"), Config::GFX_CPU_CULL);
 
