@@ -19,8 +19,8 @@
 #include "Core/PowerPC/PPCSymbolDB.h"
 #include "Core/PowerPC/PowerPC.h"
 
+#include "DolphinQt/Debugger/BreakpointDialog.h"
 #include "DolphinQt/Debugger/MemoryWidget.h"
-#include "DolphinQt/Debugger/NewBreakpointDialog.h"
 #include "DolphinQt/Resources.h"
 #include "DolphinQt/Settings.h"
 
@@ -255,6 +255,13 @@ void BreakpointWidget::Update()
 
     m_table->setItem(i, 4, create_item(flags));
 
+    QString condition;
+
+    if (mbp.condition)
+      condition = QString::fromStdString(mbp.condition->GetText());
+
+    m_table->setItem(i, 5, create_item(condition));
+
     i++;
   }
 }
@@ -299,8 +306,25 @@ void BreakpointWidget::OnClear()
 
 void BreakpointWidget::OnNewBreakpoint()
 {
-  NewBreakpointDialog* dialog = new NewBreakpointDialog(this);
+  BreakpointDialog* dialog = new BreakpointDialog(this);
   dialog->exec();
+}
+
+void BreakpointWidget::OnEditBreakpoint(u32 address, bool is_instruction_bp)
+{
+  if (is_instruction_bp)
+  {
+    auto* dialog = new BreakpointDialog(this, PowerPC::breakpoints.GetBreakpoint(address));
+    dialog->exec();
+  }
+  else
+  {
+    auto* dialog = new BreakpointDialog(this, PowerPC::memchecks.GetMemCheck(address));
+    dialog->exec();
+  }
+
+  emit BreakpointsChanged();
+  Update();
 }
 
 void BreakpointWidget::OnLoad()
@@ -389,6 +413,9 @@ void BreakpointWidget::OnContextMenu()
       Update();
     });
   }
+  menu->addAction(tr("Edit..."), [this, bp_address, is_memory_breakpoint] {
+    OnEditBreakpoint(bp_address, !is_memory_breakpoint);
+  });
 
   menu->exec(QCursor::pos());
 }
@@ -410,7 +437,7 @@ void BreakpointWidget::AddBP(u32 addr, bool temp, bool break_on_hit, bool log_on
 }
 
 void BreakpointWidget::AddAddressMBP(u32 addr, bool on_read, bool on_write, bool do_log,
-                                     bool do_break)
+                                     bool do_break, const QString& condition)
 {
   TMemCheck check;
 
@@ -421,10 +448,11 @@ void BreakpointWidget::AddAddressMBP(u32 addr, bool on_read, bool on_write, bool
   check.is_break_on_write = on_write;
   check.log_on_hit = do_log;
   check.break_on_hit = do_break;
-
+  check.condition =
+      !condition.isEmpty() ? Expression::TryParse(condition.toUtf8().constData()) : std::nullopt;
   {
     const QSignalBlocker blocker(Settings::Instance());
-    PowerPC::memchecks.Add(check);
+    PowerPC::memchecks.Add(std::move(check));
   }
 
   emit BreakpointsChanged();
@@ -432,7 +460,7 @@ void BreakpointWidget::AddAddressMBP(u32 addr, bool on_read, bool on_write, bool
 }
 
 void BreakpointWidget::AddRangedMBP(u32 from, u32 to, bool on_read, bool on_write, bool do_log,
-                                    bool do_break)
+                                    bool do_break, const QString& condition)
 {
   TMemCheck check;
 
@@ -443,10 +471,11 @@ void BreakpointWidget::AddRangedMBP(u32 from, u32 to, bool on_read, bool on_writ
   check.is_break_on_write = on_write;
   check.log_on_hit = do_log;
   check.break_on_hit = do_break;
-
+  check.condition =
+      !condition.isEmpty() ? Expression::TryParse(condition.toUtf8().constData()) : std::nullopt;
   {
     const QSignalBlocker blocker(Settings::Instance());
-    PowerPC::memchecks.Add(check);
+    PowerPC::memchecks.Add(std::move(check));
   }
 
   emit BreakpointsChanged();

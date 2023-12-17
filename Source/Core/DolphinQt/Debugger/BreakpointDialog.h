@@ -6,6 +6,8 @@
 #include <QDialog>
 
 #include "Common/CommonTypes.h"
+#include "Core/PowerPC/BreakPoints.h"
+#include "Core/PowerPC/PowerPC.h"
 
 class BreakpointWidget;
 class QCheckBox;
@@ -14,12 +16,22 @@ class QGroupBox;
 class QLabel;
 class QLineEdit;
 class QRadioButton;
+class QPushButton;
 
-class NewBreakpointDialog : public QDialog
+class BreakpointDialog : public QDialog
 {
   Q_OBJECT
 public:
-  explicit NewBreakpointDialog(BreakpointWidget* parent);
+  enum class OpenMode
+  {
+    New,
+    EditBreakPoint,
+    EditMemCheck
+  };
+
+  explicit BreakpointDialog(BreakpointWidget* parent);
+  BreakpointDialog(BreakpointWidget* parent, const TBreakPoint* breakpoint);
+  BreakpointDialog(BreakpointWidget* parent, const TMemCheck* memcheck);
 
   void accept() override;
 
@@ -35,8 +47,6 @@ private:
   QRadioButton* m_instruction_bp;
   QGroupBox* m_instruction_box;
   QLineEdit* m_instruction_address;
-  QLineEdit* m_instruction_condition;
-  QPushButton* m_cond_help_btn;
 
   // Memory BPs
   QRadioButton* m_memory_bp;
@@ -56,6 +66,11 @@ private:
   QRadioButton* m_do_break;
   QRadioButton* m_do_log_and_break;
 
+  QLineEdit* m_conditional;
+  QPushButton* m_cond_help_btn;
+
   QDialogButtonBox* m_buttons;
   BreakpointWidget* m_parent;
+
+  OpenMode m_open_mode;
 };
