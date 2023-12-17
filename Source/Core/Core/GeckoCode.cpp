@@ -65,7 +65,7 @@ static std::vector<GeckoCode> s_active_codes;
 static std::vector<GeckoCode> s_synced_codes;
 static std::mutex s_active_codes_lock;
 
-void SetActiveCodes(const std::vector<GeckoCode>& gcodes)
+void SetActiveCodes(std::span<const GeckoCode> gcodes)
 {
   std::lock_guard lk(s_active_codes_lock);
 
@@ -88,7 +88,7 @@ void SetSyncedCodesAsActive()
   s_active_codes = s_synced_codes;
 }
 
-void UpdateSyncedCodes(const std::vector<GeckoCode>& gcodes)
+void UpdateSyncedCodes(std::span<const GeckoCode> gcodes)
 {
   s_synced_codes.clear();
   s_synced_codes.reserve(gcodes.size());
@@ -97,7 +97,7 @@ void UpdateSyncedCodes(const std::vector<GeckoCode>& gcodes)
   s_synced_codes.shrink_to_fit();
 }
 
-std::vector<GeckoCode> SetAndReturnActiveCodes(const std::vector<GeckoCode>& gcodes)
+std::vector<GeckoCode> SetAndReturnActiveCodes(std::span<const GeckoCode> gcodes)
 {
   std::lock_guard lk(s_active_codes_lock);
 
