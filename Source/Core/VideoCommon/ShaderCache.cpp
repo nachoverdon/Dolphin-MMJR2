@@ -601,16 +601,6 @@ AbstractPipelineConfig ShaderCache::GetGXPipelineConfig(
   config.depth_state = depth_state;
   config.blending_state = blending_state;
   config.framebuffer_state = g_framebuffer_manager->GetEFBFramebufferState();
-
-  // We can use framebuffer fetch to emulate logic ops in the fragment shader.
-  if (config.blending_state.logicopenable && !g_ActiveConfig.backend_info.bSupportsLogicOp &&
-      !g_ActiveConfig.backend_info.bSupportsFramebufferFetch)
-  {
-    WARN_LOG_FMT(VIDEO,
-                 "Approximating logic op with blending, this will produce incorrect rendering.");
-    config.blending_state.ApproximateLogicOpWithBlending();
-  }
-
   return config;
 }
 
@@ -628,6 +618,22 @@ static GXPipelineUid ApplyDriverBugs(const GXPipelineUid& in)
     ps->ztest = EmulatedZ::Early;
   }
 
+  // If framebuffer fetch is available, we can emulate logic ops in the fragment shader
+  // and don't need the below blend approximation
+  if (blend.logicopenable && !g_ActiveConfig.backend_info.bSupportsLogicOp &&
+      !g_ActiveConfig.backend_info.bSupportsFramebufferFetch)
+  {
+    if (!blend.LogicOpApproximationIsExact())
+      WARN_LOG_FMT(VIDEO,
+                   "Approximating logic op with blending, this will produce incorrect rendering.");
+    if (blend.LogicOpApproximationWantsShaderHelp())
+    {
+      ps->emulate_logic_op_with_blend = true;
+      ps->logic_op_mode = static_cast<u32>(blend.logicmode.Value());
+    }
+    blend.ApproximateLogicOpWithBlending();
+  }
+  
   const bool benefits_from_ps_dual_source_off =
       (!g_ActiveConfig.backend_info.bSupportsDualSourceBlend &&
        g_ActiveConfig.backend_info.bSupportsFramebufferFetch) ||
@@ -775,6 +781,18 @@ static GXUberPipelineUid ApplyDriverBugs(const GXUberPipelineUid& in)
   memcpy(&out, &in, sizeof(out));  // Copy padding
   if (g_ActiveConfig.backend_info.bSupportsDynamicVertexLoader)
     out.vertex_format = nullptr;
+
+  // If framebuffer fetch is available, we can emulate logic ops in the fragment shader
+  // and don't need the below blend approximation
+  if (out.blending_state.logicopenable && !g_ActiveConfig.backend_info.bSupportsLogicOp &&
+      !g_ActiveConfig.backend_info.bSupportsFramebufferFetch)
+  {
+    if (!out.blending_state.LogicOpApproximationIsExact())
+      WARN_LOG_FMT(VIDEO,
+                   "Approximating logic op with blending, this will produce incorrect rendering.");
+    out.blending_state.ApproximateLogicOpWithBlending();
+  }
+  
   if (g_ActiveConfig.backend_info.bSupportsFramebufferFetch)
   {
     // Always blend in shader
