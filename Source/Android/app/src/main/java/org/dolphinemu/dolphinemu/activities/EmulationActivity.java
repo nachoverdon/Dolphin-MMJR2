@@ -1042,19 +1042,14 @@ public final class EmulationActivity extends AppCompatActivity
 
   private void setIRMode()
   {
-    final SharedPreferences.Editor editor = mPreferences.edit();
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setTitle(R.string.emulation_ir_mode);
     builder.setSingleChoiceItems(R.array.irModeEntries,
-      mPreferences.getInt("irMode", InputOverlayPointer.MODE_FOLLOW),
-      (dialog, indexSelected) ->
-      {
-        editor.putInt("irMode", indexSelected);
-      });
+            IntSetting.MAIN_IR_MODE.getInt(mSettings),
+            (dialog, indexSelected) ->
+                    IntSetting.MAIN_IR_MODE.setInt(mSettings, indexSelected));
     builder.setPositiveButton(R.string.ok, (dialogInterface, i) ->
-      {
-        editor.apply();
-      });
+            mEmulationFragment.refreshOverlayPointer(mSettings));
 
     builder.show();
   }

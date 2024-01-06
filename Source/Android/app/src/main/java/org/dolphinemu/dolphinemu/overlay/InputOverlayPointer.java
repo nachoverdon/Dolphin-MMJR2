@@ -53,7 +53,7 @@ public class InputOverlayPointer
   {
     doubleTapButton = button;
     mMode = mode;
-	mRecenter = recenter;
+    mRecenter = recenter;
 
     mGameCenterX = (surfacePosition.left + surfacePosition.right) / 2.0f;
     mGameCenterY = (surfacePosition.top + surfacePosition.bottom) / 2.0f;
@@ -127,7 +127,7 @@ public class InputOverlayPointer
   private void touchPress()
   {
     if (mMode != MODE_DISABLED)
-     {
+    {
       if (doubleTap)
       {
         NativeLibrary.onGamePadEvent(NativeLibrary.TouchScreenDevice,
@@ -141,8 +141,8 @@ public class InputOverlayPointer
         doubleTap = true;
         new Handler().postDelayed(() -> doubleTap = false, 300);
       }
-     }
-   }
+    }
+  }
 
   private void updateOldAxes()
   {
@@ -174,9 +174,6 @@ public class InputOverlayPointer
 
   public void setRecenter(boolean recenter)
   {
-    if(recenter != mRecenter)
-    {
-      mRecenter = recenter;
-    }
+    mRecenter = recenter;
   }
 }
