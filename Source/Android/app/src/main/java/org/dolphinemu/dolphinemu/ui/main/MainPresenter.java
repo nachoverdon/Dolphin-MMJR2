@@ -138,10 +138,6 @@ public final class MainPresenter
         new AfterDirectoryInitializationRunner().runWithLifecycle(activity,
                 () -> mView.launchOpenFileActivity(REQUEST_NAND_BIN_FILE));
         return true;
-
-      case R.id.updater_dialog:
-        mView.openUpdaterDialog();
-        return true;
     }
 
     return false;
