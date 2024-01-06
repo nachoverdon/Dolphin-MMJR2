@@ -40,7 +40,7 @@ public final class DirectoryInitialization
   public enum DirectoryInitializationState
   {
     NOT_YET_INITIALIZED,
-	INITIALIZING,
+    INITIALIZING,
     DOLPHIN_DIRECTORIES_INITIALIZED,
     EXTERNAL_STORAGE_PERMISSION_NEEDED,
     CANT_FIND_EXTERNAL_STORAGE
