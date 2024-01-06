@@ -8,7 +8,11 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-    compileSdkVersion 33
+    defaultConfig {
+        // compileSdkVersion 33
+        compileSdk 33
+    }
+    
     ndkVersion "25.1.8937393"
 
     viewBinding.enabled = true
@@ -61,7 +65,6 @@ android {
         // Signed by release key, allowing for upload to Play Store.
         release {
             signingConfig signingConfigs.release
-            zipAlignEnabled true
 
             minifyEnabled true
             shrinkResources true
@@ -107,7 +110,7 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.0'
@@ -119,7 +122,7 @@ dependencies {
     implementation 'androidx.fragment:fragment:1.5.5'
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.2.0'
     implementation 'com.google.android.material:material:1.7.0'
-	implementation 'androidx.core:core-splashscreen:1.0.0'
+    implementation 'androidx.core:core-splashscreen:1.0.0'
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.profileinstaller:profileinstaller:1.2.2'
 
@@ -139,11 +142,10 @@ dependencies {
     implementation 'com.nononsenseapps:filepicker:4.2.1'
 }
 
-def getVersion()
+static def getVersion()
 {
     return '2.2.100-dev'
 }
-
 
 def getBuildVersionCode() {
     try {
