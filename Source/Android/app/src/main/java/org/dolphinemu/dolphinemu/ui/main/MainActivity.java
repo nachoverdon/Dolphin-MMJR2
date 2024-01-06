@@ -253,7 +253,7 @@ public final class MainActivity extends AppCompatActivity
   {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-    if (requestCode == PermissionsHandler.REQUEST_CODE_WRITE_PERMISSION)
+    if (requestCode == PermissionsHandler.REQUEST_CODE_WRITE_PERMISSION && grantResults.length > 0)
     {
       if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
       {
