@@ -119,7 +119,7 @@ public final class DirectoryInitialization
 //    if (externalPath == null)
 //      return false;
 //
-//    userPath = externalPath.getAbsolutePath() + "/mmjr-revamp";
+//    userPath = externalPath.getAbsolutePath() + "/mmjr2-vbi";
 //    Log.debug("[DirectoryInitialization] User Dir: " + userPath);
 //    NativeLibrary.SetUserDirectory(userPath);
 //
