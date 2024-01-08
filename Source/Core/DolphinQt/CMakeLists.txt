@@ -27,6 +27,8 @@ set_property(TARGET Qt${QT_VERSION_MAJOR}::Core PROPERTY INTERFACE_COMPILE_FEATU
 add_executable(dolphin-emu
   AboutDialog.cpp
   AboutDialog.h
+	CheatSearchFactoryWidget.cpp
+  CheatSearchFactoryWidget.h
   CheatsManager.cpp
   CheatsManager.h
   Config/ARCodeWidget.cpp
@@ -282,6 +284,8 @@ add_executable(dolphin-emu
   QtUtils/NonDefaultQPushButton.cpp
   QtUtils/NonDefaultQPushButton.h
   QtUtils/ParallelProgressDialog.h
+	QtUtils/PartiallyClosableTabWidget.cpp
+  QtUtils/PartiallyClosableTabWidget.h
   QtUtils/SignalBlocking.h
   QtUtils/UTF8CodePointCountValidator.cpp
   QtUtils/UTF8CodePointCountValidator.h
