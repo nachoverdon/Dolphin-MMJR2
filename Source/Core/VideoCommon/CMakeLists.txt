@@ -1,6 +1,8 @@
 add_library(videocommon
   AbstractFramebuffer.cpp
   AbstractFramebuffer.h
+  AbstractGfx.cpp
+  AbstractGfx.h
   AbstractShader.h
   AbstractStagingTexture.cpp
   AbstractStagingTexture.h
@@ -23,7 +25,7 @@ add_library(videocommon
   ConstantManager.h
   CPMemory.cpp
   CPMemory.h
-	CPUCull.cpp
+  CPUCull.cpp
   CPUCull.h
   CPUCullImpl.h
   DriverDetails.cpp
@@ -34,6 +36,9 @@ add_library(videocommon
   FramebufferManager.h
   FramebufferShaderGen.cpp
   FramebufferShaderGen.h
+  FrameDumper.cpp
+  FrameDumper.h
+  FrameDumpFFMpeg.h
   FreeLookCamera.cpp
   FreeLookCamera.h
   GeometryShaderGen.cpp
@@ -82,11 +87,14 @@ add_library(videocommon
   NetPlayGolfUI.h
   OnScreenDisplay.cpp
   OnScreenDisplay.h
+  OnScreenUI.cpp
+  OnScreenUI.h
+  OnScreenUIKeyMap.h
   OpcodeDecoding.cpp
   OpcodeDecoding.h
   PerfQueryBase.cpp
   PerfQueryBase.h
-	PerformanceMetrics.cpp
+  PerformanceMetrics.cpp
   PerformanceMetrics.h
   PerformanceTracker.cpp
   PerformanceTracker.h
@@ -98,6 +106,8 @@ add_library(videocommon
   PixelShaderManager.h
   PostProcessing.cpp
   PostProcessing.h
+  Present.cpp
+  Present.h
   RenderBase.cpp
   RenderBase.h
   RenderState.cpp
@@ -154,11 +164,14 @@ add_library(videocommon
   VertexShaderManager.h
   VideoBackendBase.cpp
   VideoBackendBase.h
+  VideoEvents.h
   VideoCommon.h
   VideoConfig.cpp
   VideoConfig.h
   VideoState.cpp
   VideoState.h
+  Widescreen.cpp
+  Widescreen.h
   XFMemory.cpp
   XFMemory.h
   XFStructs.cpp
@@ -173,7 +186,7 @@ PRIVATE
   spng
   xxhash
   imgui
-	implot
+  implot
   glslang
 )
 
@@ -197,8 +210,7 @@ endif()
 
 if(FFmpeg_FOUND)
   target_sources(videocommon PRIVATE
-    FrameDump.cpp
-    FrameDump.h
+    FrameDumpFFMpeg.cpp
   )
   target_link_libraries(videocommon PRIVATE
     FFmpeg::avcodec

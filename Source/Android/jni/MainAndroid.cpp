@@ -60,7 +60,7 @@
 #include "UICommon/UICommon.h"
 
 #include "VideoCommon/OnScreenDisplay.h"
-#include "VideoCommon/RenderBase.h"
+#include "VideoCommon/Present.h"
 #include "VideoCommon/VideoBackendBase.h"
 
 #include "jni/AndroidCommon/AndroidCommon.h"
@@ -489,8 +489,8 @@ JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_SurfaceChang
   if (s_surf == nullptr)
     __android_log_print(ANDROID_LOG_ERROR, DOLPHIN_TAG, "Error: Surface is null.");
 
-  if (g_renderer)
-    g_renderer->ChangeSurface(s_surf);
+  if (g_presenter)
+    g_presenter->ChangeSurface(s_surf);
 }
 
 JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_SurfaceDestroyed(JNIEnv*,
@@ -516,8 +516,8 @@ JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_SurfaceDestr
 
   std::lock_guard surface_guard(s_surface_lock);
 
-  if (g_renderer)
-    g_renderer->ChangeSurface(nullptr);
+  if (g_presenter)
+    g_presenter->ChangeSurface(nullptr);
 
   if (s_surf)
   {
@@ -565,7 +565,7 @@ JNIEXPORT jboolean JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_HasSurfa
 JNIEXPORT jfloat JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_GetGameAspectRatio(JNIEnv*,
                                                                                          jclass)
 {
-  return g_renderer->CalculateDrawAspectRatio();
+  return g_presenter->CalculateDrawAspectRatio();
 }
 
 JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_RefreshWiimotes(JNIEnv*, jclass)
@@ -644,7 +644,6 @@ static void Run(JNIEnv* env, std::unique_ptr<BootParameters>&& boot, bool riivol
                                           riivolution_dir, volume.GetGameID(), volume.GetRevision(),
                                           volume.GetDiscNumber()));
   }
-
 
   WindowSystemInfo wsi(WindowSystemType::Android, nullptr, s_surf, s_surf);
   wsi.render_surface_scale = GetRenderSurfaceScale(env);
