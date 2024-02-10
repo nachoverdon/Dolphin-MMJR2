@@ -23,6 +23,11 @@
 	url = https://github.com/KhronosGroup/SPIRV-Cross.git
 	branch = main
 	shallow = true
+[submodule "SDL"]
+	path = Externals/SDL/SDL
+	url = https://github.com/libsdl-org/SDL.git
+	branch = SDL2
+  shallow = true
 [submodule "Externals/zlib-ng/zlib-ng"]
 	path = Externals/zlib-ng/zlib-ng
 	url = https://github.com/zlib-ng/zlib-ng.git
@@ -39,7 +44,7 @@
 	path = Externals/cubeb/cubeb
 	url = https://github.com/mozilla/cubeb.git
 	branch = master
-	shallow = true
+  shallow = true
 [submodule "Externals/implot/implot"]
 	path = Externals/implot/implot
 	url = https://github.com/epezent/implot.git
@@ -47,9 +52,3 @@
 	path = Externals/gtest
 	url = https://github.com/google/googletest/
 	branch = v1.12.x
-[submodule "SDL"]
-	path = Externals/SDL/SDL
-	url = https://github.com/libsdl-org/SDL.git
-	branch = SDL2
-[submodule "Externals/SDL/SDL"]
-	shallow = true
