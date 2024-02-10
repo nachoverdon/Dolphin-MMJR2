@@ -3,19 +3,19 @@
 
 #pragma once
 
+#include "VideoCommon/AbstractGfx.h"
 #include "VideoCommon/RenderBase.h"
-
-class BoundingBox;
 
 namespace Null
 {
-class Renderer final : public ::Renderer
+class NullGfx final : public AbstractGfx
 {
 public:
-  Renderer();
-  ~Renderer() override;
+  NullGfx();
+  ~NullGfx() override;
 
   bool IsHeadless() const override;
+  virtual bool SupportsUtilityDrawing() const override;
 
   std::unique_ptr<AbstractTexture> CreateTexture(const TextureConfig& config,
                                                  std::string_view name) override;
@@ -34,18 +34,19 @@ public:
   std::unique_ptr<AbstractPipeline> CreatePipeline(const AbstractPipelineConfig& config,
                                                    const void* cache_data = nullptr,
                                                    size_t cache_data_length = 0) override;
+  SurfaceInfo GetSurfaceInfo() const override { return {}; }
+};
+
+class NullRenderer final : public Renderer
+{
+public:
+  NullRenderer() {}
+  ~NullRenderer() override;
 
   u32 AccessEFB(EFBAccessType type, u32 x, u32 y, u32 poke_data) override { return 0; }
   void PokeEFB(EFBAccessType type, const EfbPokeData* points, size_t num_points) override {}
 
-  void ClearScreen(const MathUtil::Rectangle<int>& rc, bool colorEnable, bool alphaEnable,
-                   bool zEnable, u32 color, u32 z) override
-  {
-  }
-
   void ReinterpretPixelData(EFBReinterpretType convtype) override {}
-
-protected:
-  std::unique_ptr<BoundingBox> CreateBoundingBox() const override;
 };
+
 }  // namespace Null

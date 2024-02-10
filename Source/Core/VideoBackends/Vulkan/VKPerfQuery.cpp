@@ -13,8 +13,9 @@
 
 #include "VideoBackends/Vulkan/CommandBufferManager.h"
 #include "VideoBackends/Vulkan/StateTracker.h"
-#include "VideoBackends/Vulkan/VKRenderer.h"
+#include "VideoBackends/Vulkan/VKGfx.h"
 #include "VideoBackends/Vulkan/VulkanContext.h"
+#include "VideoCommon/FramebufferManager.h"
 #include "VideoCommon/VideoCommon.h"
 
 namespace Vulkan
@@ -78,7 +79,7 @@ void PerfQuery::DisableQuery(PerfQueryGroup group)
     vkCmdEndQuery(g_command_buffer_mgr->GetCurrentCommandBuffer(), m_query_pool, m_query_next_pos);
     ActiveQuery& entry = m_query_buffer[m_query_next_pos];
     entry.fence_counter = g_command_buffer_mgr->GetCurrentFenceCounter();
-  
+
     m_query_next_pos = (m_query_next_pos + 1) % PERF_QUERY_BUFFER_SIZE;
     m_query_count.fetch_add(1, std::memory_order_relaxed);
   }
@@ -218,8 +219,8 @@ void PerfQuery::ReadbackQueries(u32 query_count)
 
     // NOTE: Reported pixel metrics should be referenced to native resolution
     const u64 native_res_result = static_cast<u64>(m_query_result_buffer[i]) * EFB_WIDTH /
-                                  g_renderer->GetTargetWidth() * EFB_HEIGHT /
-                                  g_renderer->GetTargetHeight();
+                                  g_framebuffer_manager->GetEFBWidth() * EFB_HEIGHT /
+                                  g_framebuffer_manager->GetEFBHeight();
     m_results[entry.query_group].fetch_add(static_cast<u32>(native_res_result),
                                            std::memory_order_relaxed);
   }
@@ -234,7 +235,7 @@ void PerfQuery::PartialFlush(bool blocking)
   if (blocking || m_query_buffer[m_query_readback_pos].fence_counter ==
                       g_command_buffer_mgr->GetCurrentFenceCounter())
   {
-    Renderer::GetInstance()->ExecuteCommandBuffer(true, blocking);
+    VKGfx::GetInstance()->ExecuteCommandBuffer(true, blocking);
   }
 
   ReadbackQueries();
