@@ -473,7 +473,7 @@ void SaveAs(const std::string& filename, bool wait)
   Core::RunOnCPUThread(
       [&] {
         {
-          std::lock_guard lk(s_state_writes_in_queue_mutex);
+          std::lock_guard lk_(s_state_writes_in_queue_mutex);
           ++s_state_writes_in_queue;
         }
 
