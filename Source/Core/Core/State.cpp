@@ -235,7 +235,7 @@ static void DoState(PointerWrap& p)
 
   PowerPC::DoState(p);
   p.DoMarker("PowerPC");
-  
+
   if (SConfig::GetInstance().bWii)
     Wiimote::DoState(p);
   p.DoMarker("Wiimote");
@@ -298,6 +298,35 @@ static int GetEmptySlot(std::map<double, int> m)
   return -1;
 }
 
+// Arbitrarily chosen value (38 years) that is subtracted in GetSystemTimeAsDouble()
+// to increase sub-second precision of the resulting double timestamp
+static constexpr int DOUBLE_TIME_OFFSET = (38 * 365 * 24 * 60 * 60);
+
+static double GetSystemTimeAsDouble()
+{
+  const auto since_epoch = std::chrono::system_clock::now().time_since_epoch();
+
+  const auto since_double_time_epoch = since_epoch - std::chrono::seconds(DOUBLE_TIME_OFFSET);
+  return std::chrono::duration_cast<std::chrono::duration<double>>(since_double_time_epoch).count();
+}
+
+static std::string SystemTimeAsDoubleToString(double time)
+{
+  // revert adjustments from GetSystemTimeAsDouble() to get a normal Unix timestamp again
+  time_t seconds = (time_t)time + DOUBLE_TIME_OFFSET;
+  tm* localTime = localtime(&seconds);
+
+#ifdef _WIN32
+  wchar_t tmp[32] = {};
+  wcsftime(tmp, std::size(tmp), L"%x %X", localTime);
+  return WStringToUTF8(tmp);
+#else
+  char tmp[32] = {};
+  strftime(tmp, sizeof(tmp), "%x %X", localTime);
+  return tmp;
+#endif
+}
+
 static std::string MakeStateFilename(int number);
 
 // read state timestamps
@@ -312,7 +341,7 @@ static std::map<double, int> GetSavedStates()
     {
       if (ReadHeader(filename, header))
       {
-        double d = Common::Timer::GetSystemTimeAsDouble() - header.time;
+        double d = GetSystemTimeAsDouble() - header.time;
 
         // increase time until unique value is obtained
         while (m.find(d) != m.end())
@@ -353,7 +382,7 @@ static void CompressAndDumpState(CompressAndDumpState_args& save_args)
   StateHeader header{};
   SConfig::GetInstance().GetGameID().copy(header.gameID, std::size(header.gameID));
   header.size = s_use_compression ? (u32)buffer_size : 0;
-  header.time = Common::Timer::GetSystemTimeAsDouble();
+  header.time = GetSystemTimeAsDouble();
 
   f.WriteArray(&header, 1);
 
@@ -464,13 +493,12 @@ void SaveAs(const std::string& filename, bool wait)
         if (p.IsWriteMode())
         {
           Core::DisplayMessage("Saving State...", 1000);
-
-		  std::shared_ptr<Common::Event> sync_event;
+          
+          std::shared_ptr<Common::Event> sync_event;
 
           CompressAndDumpState_args save_args;
           save_args.buffer_vector = std::move(current_buffer);
           save_args.filename = filename;
-
           if (wait)
           {
             sync_event = std::make_shared<Common::Event>();
@@ -484,7 +512,7 @@ void SaveAs(const std::string& filename, bool wait)
         }
         else
         {
-           // someone aborted the save by changing the mode?
+          // someone aborted the save by changing the mode?
           {
             // Note: The worker thread takes care of this in the other branch.
             std::lock_guard lk(s_state_writes_in_queue_mutex);
@@ -516,7 +544,7 @@ std::string GetInfoStringOfSlot(int slot, bool translate)
   if (!ReadHeader(filename, header))
     return translate ? Common::GetStringT("Unknown") : "Unknown";
 
-  return Common::Timer::SystemTimeAsDoubleToString(header.time);
+  return SystemTimeAsDoubleToString(header.time);
 }
 
 u64 GetUnixTimeOfSlot(int slot)
@@ -526,8 +554,7 @@ u64 GetUnixTimeOfSlot(int slot)
     return 0;
 
   constexpr u64 MS_PER_SEC = 1000;
-  return static_cast<u64>(header.time * MS_PER_SEC) +
-         (Common::Timer::DOUBLE_TIME_OFFSET * MS_PER_SEC);
+  return static_cast<u64>(header.time * MS_PER_SEC) + (DOUBLE_TIME_OFFSET * MS_PER_SEC);
 }
 
 static void LoadFileStateData(const std::string& filename, std::vector<u8>& ret_data)
@@ -632,7 +659,7 @@ void LoadAs(const std::string& filename)
         // Save temp buffer for undo load state
         if (!Movie::IsJustStartingRecordingInputFromSaveState())
         {
-          std::lock_guard lk(s_undo_load_buffer_mutex);
+          std::lock_guard lk2(s_undo_load_buffer_mutex);
           SaveToBuffer(s_undo_load_buffer);
           const std::string dtmpath = File::GetUserPath(D_STATESAVES_IDX) + "undo.dtm";
           if (Movie::IsMovieActive())
@@ -718,7 +745,6 @@ void Shutdown()
   // swapping with an empty vector, rather than clear()ing
   // this gives a better guarantee to free the allocated memory right NOW (as opposed to, actually,
   // never)
-
   {
     std::lock_guard lk(s_undo_load_buffer_mutex);
     std::vector<u8>().swap(s_undo_load_buffer);

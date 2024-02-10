@@ -4,23 +4,16 @@
 #include "Common/Timer.h"
 
 #include <chrono>
-#include <string>
 
 #ifdef _WIN32
-#include <cwchar>
-
 #include <Windows.h>
-#include <mmsystem.h>
-#include <sys/timeb.h>
+#include <ctime>
+#include <timeapi.h>
 #else
 #include <sys/time.h>
 #endif
 
-#include <fmt/chrono.h>
-#include <fmt/format.h>
-
 #include "Common/CommonTypes.h"
-#include "Common/StringUtil.h"
 
 namespace Common
 {
@@ -56,8 +49,7 @@ void Timer::Start()
 void Timer::StartWithOffset(u64 offset)
 {
   Start();
-  if (m_start_ms > offset)
-    m_start_ms -= offset;
+  m_start_ms -= offset;
 }
 
 void Timer::Stop()
@@ -68,23 +60,10 @@ void Timer::Stop()
 
 u64 Timer::ElapsedMs() const
 {
-  // If we have not started yet, return zero
-  if (m_start_ms == 0)
-    return 0;
-
-  if (m_running)
-  {
-    u64 now = NowMs();
-    if (m_start_ms >= now)
-      return 0;
-    return now - m_start_ms;
-  }
-  else
-  {
-    if (m_start_ms >= m_end_ms)
-      return 0;
-    return m_end_ms - m_start_ms;
-  }
+  const u64 end = m_running ? NowMs() : m_end_ms;
+  // Can handle up to 1 rollover event (underflow produces correct result)
+  // If Start() has never been called, will return 0
+  return end - m_start_ms;
 }
 
 u64 Timer::GetLocalTimeSinceJan1970()
@@ -110,41 +89,25 @@ u64 Timer::GetLocalTimeSinceJan1970()
   return static_cast<u64>(sysTime + tzDiff + tzDST);
 }
 
-double Timer::GetSystemTimeAsDouble()
-{
-  // FYI: std::chrono::system_clock epoch is not required to be 1970 until c++20.
-  // We will however assume time_t IS unix time.
-  using Clock = std::chrono::system_clock;
-
-  // TODO: Use this on switch to c++20:
-  // const auto since_epoch = Clock::now().time_since_epoch();
-  const auto unix_epoch = Clock::from_time_t({});
-  const auto since_epoch = Clock::now() - unix_epoch;
-
-  const auto since_double_time_epoch = since_epoch - std::chrono::seconds(DOUBLE_TIME_OFFSET);
-  return std::chrono::duration_cast<std::chrono::duration<double>>(since_double_time_epoch).count();
-}
-
-std::string Timer::SystemTimeAsDoubleToString(double time)
-{
-  // revert adjustments from GetSystemTimeAsDouble() to get a normal Unix timestamp again
-  time_t seconds = (time_t)time + DOUBLE_TIME_OFFSET;
-  tm* localTime = localtime(&seconds);
-
-#ifdef _WIN32
-  wchar_t tmp[32] = {};
-  wcsftime(tmp, std::size(tmp), L"%x %X", localTime);
-  return WStringToUTF8(tmp);
-#else
-  char tmp[32] = {};
-  strftime(tmp, sizeof(tmp), "%x %X", localTime);
-  return tmp;
-#endif
-}
-
 void Timer::IncreaseResolution()
 {
 #ifdef _WIN32
+  // Disable execution speed and timer resolution throttling process-wide.
+  // This mainly will keep Dolphin marked as high performance if it's in the background. The OS
+  // should make it high performance if it's in the foreground anyway (or for some specific
+  // threads e.g. audio).
+  // This is best-effort (i.e. the call may fail on older versions of Windows, where such throttling
+  // doesn't exist, anyway), and we don't bother reverting once set.
+  // This adjusts behavior on CPUs with "performance" and "efficiency" cores
+  PROCESS_POWER_THROTTLING_STATE PowerThrottling{};
+  PowerThrottling.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
+  PowerThrottling.ControlMask =
+      PROCESS_POWER_THROTTLING_EXECUTION_SPEED | PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION;
+  PowerThrottling.StateMask = 0;
+  SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &PowerThrottling,
+                        sizeof(PowerThrottling));
+
+  // Not actually sure how useful this is these days.. :')
   timeBeginPeriod(1);
 #endif
 }
