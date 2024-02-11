@@ -550,12 +550,7 @@ void MenuBar::InstallUpdateManually()
   auto* const updater = new Updater(this->parentWidget(), manual_track,
                                     Config::Get(Config::MAIN_AUTOUPDATE_HASH_OVERRIDE));
 
-  if (!updater->CheckForUpdate())
-  {
-    ModalMessageBox::information(
-        this, tr("Update"),
-        tr("You are running the latest version available on this update track."));
-  }
+  updater->CheckForUpdate();
 }
 
 void MenuBar::AddHelpMenu()
@@ -1203,7 +1198,6 @@ void MenuBar::GenerateSymbolsFromSignatureDB()
 {
   auto& system = Core::System::GetInstance();
   auto& memory = system.GetMemory();
-  
   PPCAnalyst::FindFunctions(Memory::MEM1_BASE_ADDR,
                             Memory::MEM1_BASE_ADDR + memory.GetRamSizeReal(), &g_symbolDB);
   SignatureDB db(SignatureDB::HandlerType::DSY);
@@ -1413,8 +1407,7 @@ RSOVector MenuBar::DetectRSOModules(ParallelProgressDialog& progress)
 void MenuBar::LoadSymbolMap()
 {
   auto& system = Core::System::GetInstance();
-  auto& memory = system.GetMemory();
-  
+  auto& memory = system.GetMemory();  
   std::string existing_map_file, writable_map_file;
   bool map_exists = CBoot::FindMapFile(&existing_map_file, &writable_map_file);
 
@@ -1422,7 +1415,7 @@ void MenuBar::LoadSymbolMap()
   {
     g_symbolDB.Clear();
     PPCAnalyst::FindFunctions(Memory::MEM1_BASE_ADDR + 0x1300000,
-                             Memory::MEM1_BASE_ADDR + memory.GetRamSizeReal(), &g_symbolDB);
+                              Memory::MEM1_BASE_ADDR + memory.GetRamSizeReal(), &g_symbolDB);
     SignatureDB db(SignatureDB::HandlerType::DSY);
     if (db.Load(File::GetSysDirectory() + TOTALDB))
       db.Apply(&g_symbolDB);
