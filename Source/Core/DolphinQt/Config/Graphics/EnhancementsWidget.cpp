@@ -490,7 +490,7 @@ void EnhancementsWidget::AddDescriptions()
       "resolution, such as in games that use very low resolution mipmaps. Disabling this can also "
       "reduce stutter in games that frequently load new textures. This feature is not compatible "
       "with GPU Texture Decoding.<br><br><dolphin_emphasis>If unsure, leave this "
-      "checked.</dolphin_emphasis>");
+      "unchecked.</dolphin_emphasis>");
 
   m_ir_combo->SetTitle(tr("Internal Resolution"));
   m_ir_combo->SetDescription(tr(TR_INTERNAL_RESOLUTION_DESCRIPTION));
