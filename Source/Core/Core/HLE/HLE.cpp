@@ -107,7 +107,7 @@ void PatchFixedFunctions(Core::System& system)
 void PatchFunctions(Core::System& system)
 {
   auto& ppc_state = system.GetPPCState();
-  
+
   // Remove all hooks that aren't fixed address hooks
   for (auto i = s_hooked_addresses.begin(); i != s_hooked_addresses.end();)
   {
@@ -152,12 +152,12 @@ void Reload(Core::System& system)
   PatchFunctions(system);
 }
 
-void Execute(u32 current_pc, u32 hook_index)
+void Execute(const Core::CPUThreadGuard& guard, u32 current_pc, u32 hook_index)
 {
   hook_index &= 0xFFFFF;
   if (hook_index > 0 && hook_index < os_patches.size())
   {
-    os_patches[hook_index].function();
+    os_patches[hook_index].function(guard);
   }
   else
   {
@@ -246,7 +246,7 @@ u32 UnPatch(Core::System& system, std::string_view patch_name)
 u32 UnpatchRange(Core::System& system, u32 start_addr, u32 end_addr)
 {
   auto& ppc_state = system.GetPPCState();
-  
+
   u32 count = 0;
 
   auto i = s_hooked_addresses.lower_bound(start_addr);

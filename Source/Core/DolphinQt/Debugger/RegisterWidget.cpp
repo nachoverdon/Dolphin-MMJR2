@@ -295,7 +295,11 @@ void RegisterWidget::AutoStep(const std::string& reg) const
 
   while (true)
   {
-    const AutoStepResults results = trace.AutoStepping(true);
+    const AutoStepResults results = [&trace] {
+      Core::CPUThreadGuard guard;
+      return trace.AutoStepping(guard, true);
+    }();
+
     emit Host::GetInstance()->UpdateDisasmDialog();
 
     if (!results.timed_out)
@@ -424,7 +428,7 @@ void RegisterWidget::PopulateTable()
   AddRegister(
       21, 5, RegisterType::xer, "XER", [] { return PowerPC::ppcState.GetXER().Hex; },
       [](u64 value) { PowerPC::ppcState.SetXER(UReg_XER(value)); });
-  
+
   // FPSCR
   AddRegister(
       22, 5, RegisterType::fpscr, "FPSCR", [] { return PowerPC::ppcState.fpscr.Hex; },
