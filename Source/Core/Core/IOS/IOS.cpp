@@ -17,6 +17,7 @@
 #include "Common/CommonTypes.h"
 #include "Common/Logging/Log.h"
 #include "Common/Timer.h"
+
 #include "Core/Boot/AncastTypes.h"
 #include "Core/Boot/DolReader.h"
 #include "Core/Boot/ElfReader.h"
@@ -231,7 +232,7 @@ void RAMOverrideForIOSMemoryValues(MemorySetupType setup_type)
   // Don't touch anything if the feature isn't enabled.
   if (!Config::Get(Config::MAIN_RAM_OVERRIDE_ENABLE))
     return;
-  
+
   auto& system = Core::System::GetInstance();
   auto& memory = system.GetMemory();
 
@@ -912,7 +913,10 @@ static void FinishPPCBootstrap(Core::System& system, u64 userdata, s64 cycles_la
   else
     ReleasePPC();
 
-  SConfig::OnNewTitleLoad();
+  ASSERT(Core::IsCPUThread());
+  Core::CPUThreadGuard guard;
+  SConfig::OnNewTitleLoad(guard);
+
   INFO_LOG_FMT(IOS, "Bootstrapping done.");
 }
 
