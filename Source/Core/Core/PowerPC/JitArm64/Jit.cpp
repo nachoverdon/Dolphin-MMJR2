@@ -70,7 +70,7 @@ void JitArm64::Init()
   code_block.m_stats = &js.st;
   code_block.m_gpa = &js.gpa;
   code_block.m_fpa = &js.fpa;
-  
+
   m_enable_blr_optimization = jo.enableBlocklink && m_fastmem_enabled && !m_enable_debugging;
   m_cleanup_after_stackfault = false;
 
@@ -254,7 +254,7 @@ void JitArm64::HLEFunction(u32 hook_index)
   gpr.Flush(FlushMode::All, ARM64Reg::INVALID_REG);
   fpr.Flush(FlushMode::All, ARM64Reg::INVALID_REG);
 
-  MOVP2R(ARM64Reg::X8, &HLE::Execute);
+  MOVP2R(ARM64Reg::X8, &HLE::ExecuteFromJIT);
   MOVI2R(ARM64Reg::W0, js.compilerPC);
   MOVI2R(ARM64Reg::W1, hook_index);
   BLR(ARM64Reg::X8);
@@ -1080,7 +1080,7 @@ bool JitArm64::DoJit(u32 em_address, JitBlock* b, u32 nextPC)
         FlushCarry();
         gpr.Flush(FlushMode::All, ARM64Reg::INVALID_REG);
         fpr.Flush(FlushMode::All, ARM64Reg::INVALID_REG);
-        
+
         static_assert(PPCSTATE_OFF(pc) <= 252);
         static_assert(PPCSTATE_OFF(pc) + 4 == PPCSTATE_OFF(npc));
 
