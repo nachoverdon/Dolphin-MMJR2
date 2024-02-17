@@ -14,6 +14,10 @@ if (POLICY CMP0117)
   cmake_policy(SET CMP0117 NEW) # MSVC RTTI flag will not be added by default.
 endif()
 
+if (POLICY CMP0141)
+  cmake_policy(SET CMP0141 NEW) # MSVC debug information format flags are selected by an abstraction.
+endif()
+
 # Minimum OS X version.
 # This is inserted into the Info.plist as well.
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15.0" CACHE STRING "")
@@ -319,13 +323,13 @@ if(MSVC)
   # Enable buffer security check on Debug, disable otherwise
   add_compile_options($<IF:$<CONFIG:Debug>,/GS,/GS->)
   # Remove unreferenced inline functions/data to reduce link time and catch bugs
-	# Note: In msbuild build, this gets set by msbuild by default
+  # Note: In msbuild build, this gets set by msbuild by default
   add_compile_options(/Zc:inline)
   # Fix various other non-conformant behaviors
   add_compile_options(/Zc:__cplusplus,enumTypes,externConstexpr,preprocessor,throwingNew)
   # Enforce strict volatile semantics as per ISO C++
   add_compile_options(/volatile:iso)
-  
+
   # Use 'precise' floating point model
   add_compile_options(/fp:precise)
 
@@ -498,12 +502,15 @@ if(ENABLE_HEADLESS)
   set(USE_DISCORD_PRESENCE 0)
 endif()
 
-# Set file offset size to 64 bits.
+# Set file offset size to 64 bits. On modern Unixes, this is typically already the case. Exceptions:
 #
-# On modern Unixes, this is typically already the case. The lone exception is
-# glibc, which may default to 32 bits. glibc allows this to be configured
-# by setting _FILE_OFFSET_BITS.
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+# glibc may default to 32 bits. This can be configured by setting _FILE_OFFSET_BITS=64.
+#
+# bionic (Android) defaults to 32 bits for 32-bit ABIs. Here too we can use _FILE_OFFSET_BITS=64,
+# but only on API 25 and up. Since we're currently supporting older API levels and 32-bit Android
+# isn't a build configuration we officially support, let's leave this as it is for now.
+# More details: https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md
+if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
   add_definitions(-D_FILE_OFFSET_BITS=64)
   add_definitions(-D_LARGEFILE_SOURCE)
 endif()
@@ -764,7 +771,7 @@ endif()
 pkg_check_modules(ZSTD QUIET libzstd>=1.4.0 IMPORTED_TARGET)
 if(ZSTD_FOUND)
   message(STATUS "Using shared zstd version: " ${ZSTD_VERSION})
-	dolphin_alias_library(zstd::zstd PkgConfig::ZSTD)
+  dolphin_alias_library(zstd::zstd PkgConfig::ZSTD)
 else()
   check_vendoring_approved(zstd)
   message(STATUS "Shared zstd not found, falling back to the static library")
@@ -776,7 +783,7 @@ add_subdirectory(Externals/zlib-ng)
 pkg_check_modules(MINIZIP minizip>=3.0.0)
 if(MINIZIP_FOUND)
   message(STATUS "Using shared minizip")
-	include_directories(${MINIZIP_INCLUDE_DIRS})
+  include_directories(${MINIZIP_INCLUDE_DIRS})
 else()
   check_vendoring_approved(minizip)
   message(STATUS "Shared minizip not found, falling back to the static library")
