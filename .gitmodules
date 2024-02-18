@@ -27,7 +27,7 @@
 	path = Externals/SDL/SDL
 	url = https://github.com/libsdl-org/SDL.git
 	branch = SDL2
-  shallow = true
+	shallow = true
 [submodule "Externals/zlib-ng/zlib-ng"]
 	path = Externals/zlib-ng/zlib-ng
 	url = https://github.com/zlib-ng/zlib-ng.git
