@@ -75,7 +75,7 @@ static void ShowResult(QWidget* parent, WiiUtils::UpdateResult result)
   default:
     ASSERT(false);
     break;
-	}
+  }
 }
 
 template <typename Callable, typename... Args>
