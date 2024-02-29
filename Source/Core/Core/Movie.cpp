@@ -1277,9 +1277,9 @@ void PlayController(GCPadStatus* PadStatus, int controllerID)
   if (s_padState.disc)
   {
     Core::RunAsCPUThread([] {
-      if (!DVDInterface::AutoChangeDisc())
+      auto& system = Core::System::GetInstance();
+      if (!system.GetDVDInterface().AutoChangeDisc())
       {
-        auto& system = Core::System::GetInstance();
         system.GetCPU().Break();
         PanicAlertFmtT("Change the disc to {0}", s_discChange);
       }
