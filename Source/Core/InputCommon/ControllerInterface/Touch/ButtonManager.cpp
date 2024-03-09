@@ -641,7 +641,7 @@ void Init(const std::string& game_id)
             new sBind(a, WIIMOTE_GYRO_YAW_RIGHT, BIND_AXIS, WIIMOTE_GYRO_YAW_RIGHT, -1.0f));
   }
   // Init our controller bindings
-  IniFile ini;
+  Common::IniFile ini;
   ini.Load(File::GetUserPath(D_CONFIG_IDX) + std::string("Dolphin.ini"), true);
   ini.Load(File::GetUserPath(D_GAMESETTINGS_IDX) + std::string(game_id + ".ini"), true);
   for (u32 a = 0; a < CONFIG_STRINGS.size(); ++a)
