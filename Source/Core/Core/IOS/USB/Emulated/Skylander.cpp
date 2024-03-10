@@ -17,7 +17,7 @@
 
 namespace IOS::HLE::USB
 {
-SkylanderUSB::SkylanderUSB(Kernel& ios, const std::string& device_name) : m_ios(ios)
+SkylanderUSB::SkylanderUSB(EmulationKernel& ios, const std::string& device_name) : m_ios(ios)
 {
   m_vid = 0x1430;
   m_pid = 0x150;
@@ -146,7 +146,7 @@ int SkylanderUSB::SubmitTransfer(std::unique_ptr<CtrlMessage> cmd)
   else
   {
     // Skylander Portal Requests
-    auto& system = Core::System::GetInstance();
+    auto& system = m_ios.GetSystem();
     auto& memory = system.GetMemory();
     u8* buf = memory.GetPointerForRange(cmd->data_address, cmd->length);
     if (cmd->length == 0 || buf == nullptr)
@@ -438,7 +438,7 @@ int SkylanderUSB::SubmitTransfer(std::unique_ptr<IntrMessage> cmd)
   DEBUG_LOG_FMT(IOS_USB, "[{:04x}:{:04x} {}] Interrupt: length={} endpoint={}", m_vid, m_pid,
                 m_active_interface, cmd->length, cmd->endpoint);
 
-  auto& system = Core::System::GetInstance();
+  auto& system = m_ios.GetSystem();
   auto& memory = system.GetMemory();
   u8* buf = memory.GetPointerForRange(cmd->data_address, cmd->length);
   if (cmd->length == 0 || buf == nullptr)
@@ -459,6 +459,7 @@ int SkylanderUSB::SubmitTransfer(std::unique_ptr<IntrMessage> cmd)
     expected_time_us = 1000;
     expected_count = cmd->length;
     ScheduleTransfer(std::move(cmd), audio_interrupt_response, expected_count, expected_time_us);
+    
     return 0;
   }
   // If some data was requested from the Control Message, then the Interrupt message needs to
@@ -760,12 +761,10 @@ bool SkylanderPortal::CreateSkylander(const std::string& file_path, u16 sky_id, 
   file_data[6] = 0x01;
 
   // SAK
-  file_data[7] = 0x0F;
-  
+  file_data[7] = 0x0F;  
   // Set the skylander info
   memcpy(&file_data[0x10], &sky_id, sizeof(sky_id));
-  memcpy(&file_data[0x1C], &sky_var, sizeof(sky_var));
-  
+  memcpy(&file_data[0x1C], &sky_var, sizeof(sky_var));  
   // Set checksum
   u16 checksum = SkylanderCRC16(0xFFFF, file_data, 0x1E);
   memcpy(&file_data[0x1E], &checksum, sizeof(checksum));
