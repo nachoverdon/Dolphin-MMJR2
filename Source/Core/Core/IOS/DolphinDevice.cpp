@@ -193,7 +193,7 @@ IPCReply SetDiscordPresence(Core::System& system, const IOCtlVRequest& request)
   int64_t start_timestamp = memory.Read_U64(request.in_vectors[6].address);
   int64_t end_timestamp = memory.Read_U64(request.in_vectors[7].address);
   int party_size = memory.Read_U32(request.in_vectors[8].address);
-  int party_max = memory.Read_U32(request.in_vectors[9].address);;
+  int party_max = memory.Read_U32(request.in_vectors[9].address);
 
   bool ret = Host_UpdateDiscordPresenceRaw(details, state, large_image_key, large_image_text,
                                            small_image_key, small_image_text, start_timestamp,
@@ -237,8 +237,7 @@ IPCReply DolphinDevice::GetElapsedTime(const IOCtlVRequest& request) const
 
   auto& system = GetSystem();
   auto& memory = system.GetMemory();
-  memory.Write_U32(milliseconds, request.io_vectors[0].address);
-  
+  memory.Write_U32(milliseconds, request.io_vectors[0].address);  
   return IPCReply(IPC_SUCCESS);
 }
 
@@ -255,8 +254,7 @@ IPCReply DolphinDevice::GetSystemTime(const IOCtlVRequest& request) const
   }
 
   auto& system = GetSystem();
-  auto& memory = system.GetMemory();
-  
+  auto& memory = system.GetMemory();  
   // Write Unix timestamp in milliseconds to memory address
   const u64 milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
                                std::chrono::system_clock::now().time_since_epoch())
