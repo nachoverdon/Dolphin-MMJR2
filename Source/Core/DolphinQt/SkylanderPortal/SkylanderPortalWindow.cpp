@@ -306,9 +306,8 @@ void SkylanderPortalWindow::LoadSkylanderPath(u8 slot, const QString& path)
   }
 
   ClearSkylander(slot);
-  
-  auto& system = Core::System::GetInstance();
 
+  auto& system = Core::System::GetInstance();
   std::pair<u16, u16> id_var = system.GetSkylanderPortal().CalculateIDs(file_data);
   u8 portal_slot = system.GetSkylanderPortal().LoadSkylander(file_data.data(), std::move(sky_file));
   if (portal_slot == 0xFF)

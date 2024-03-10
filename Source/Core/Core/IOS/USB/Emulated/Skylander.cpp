@@ -1221,9 +1221,11 @@ bool SkylanderPortal::CreateSkylander(const std::string& file_path, u16 sky_id, 
 
   // SAK
   file_data[7] = 0x0F;
+
   // Set the skylander info
   memcpy(&file_data[0x10], &sky_id, sizeof(sky_id));
-  memcpy(&file_data[0x1C], &sky_var, sizeof(sky_var));  
+  memcpy(&file_data[0x1C], &sky_var, sizeof(sky_var));
+
   // Set checksum
   u16 checksum = SkylanderCRC16(0xFFFF, file_data, 0x1E);
   memcpy(&file_data[0x1E], &checksum, sizeof(checksum));
