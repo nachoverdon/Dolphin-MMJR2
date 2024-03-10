@@ -255,7 +255,7 @@ WiiTASInputWindow::WiiTASInputWindow(QWidget* parent, int num) : TASInputWindow(
   }
   else
   {
-    IniFile ini;
+    Common::IniFile ini;
     ini.Load(File::GetUserPath(D_CONFIG_IDX) + "WiimoteNew.ini");
     std::string extension;
     ini.GetIfExists("Wiimote" + std::to_string(num + 1), "Extension", &extension);
