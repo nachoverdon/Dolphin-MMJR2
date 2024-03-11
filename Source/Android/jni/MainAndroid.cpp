@@ -686,7 +686,7 @@ static void Run(JNIEnv* env, std::unique_ptr<BootParameters>&& boot, bool riivol
   s_game_metadata_is_valid = false;
   Core::Shutdown();
   ButtonManager::Shutdown();
-  host_identity_guard.unlock();
+  host_identity_guard.lock.unlock();
 
   env->CallStaticVoidMethod(IDCache::GetNativeLibraryClass(),
                             IDCache::GetFinishEmulationActivity());
