@@ -149,7 +149,9 @@ public:
 
   TimePoint GetCPUTimePoint(s64 cyclesLate) const;  // Used by Dolphin Analytics
   bool GetVISkip() const;                           // Used By VideoInterface
-  
+
+  bool UseSyncOnSkipIdle() const;
+
 private:
   Globals m_globals;
 
