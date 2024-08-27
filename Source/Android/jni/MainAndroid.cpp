@@ -324,12 +324,14 @@ JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_onGamePadMov
 JNIEXPORT jboolean JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_onHotkeyEvent(
         JNIEnv* env, jclass, jint HotkeyId, jboolean showMessage)
 {
+  HostThreadLock guard;
   return AndroidHotkey::onHotkeyEvent(HotkeyId, showMessage);
 }
 
 JNIEXPORT jboolean JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_getHotkeyState(
         JNIEnv* env, jclass, jint HotkeyId)
 {
+  HostThreadLock guard;
   return AndroidHotkey::getHotkeyState(HotkeyId);
 }
 
