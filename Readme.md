@@ -1,10 +1,12 @@
 # Dolphin MMJR2 - VBI Fork
-This fork is intended mostly for personal use. My goal is to incorporate a series of pull requests from Sam Belliveau into the MMJR2 codebase that implement the VBI Skip speed hack. Dolphin team abandoned non-integer scaling a long time ago. While I completely understand their reasons, I have a hard time letting this feature go. Many Android devices with potato chipsets, like Anbernic or Retroid, can run most games at 1.5x nearly full speed. 2x resolution is usually too much for them, and framerate suffers significantly. Unfortunately, enabling non-integer scaling on the most recent codebase is way out of my league, so I'm going the other way. I want to bring the VBI Skip Hack to MMJR2. All changes to the code are handled by pull requests, credited and linked to original pull requests from Official Dolphin repository.
+This fork is intended mostly for personal use. My initial goal was to incorporate a series of pull requests from Sam Belliveau into the MMJR2 codebase that implement the VBI Skip speed hack, which was a success. After that,  I am slowly updating the MMJR2 codebase with changes and fixes from Dolphin Official. All changes to the code are handled by pull requests, credited and linked to original pull requests from Official Dolphin repository.
+I primarily test on a SD855+ device and Retroid POcket 4 Pro. Unfortunately I no longer own my old trusty Retroid Pocket 3+. Builds beyond version 2.2.110 are no longer tested on potato devices and might have preformance regressions.
 
 BEWARE: this is based on old source code! Things may break, saves may corrupt, apps may crash, and there might be no fixes in the near future! If you don't want to experiment or are new to emulation, stick with Official Dolphin!
 -----------------------------------------------------------------------
-Thank you Dolphin team for your amazing work. Your dedication and hard work have made it possible for people to play their favorite games on modern hardware. Keep up the great work!” 🐬👏 Thanks to the developers of the original MMJR and MMJR2 fork, and Lumince for keeping MMJR2 alive for so long.  
+Thank you Dolphin team for your amazing work. Your dedication and hard work have made it possible for people to play their favorite games on modern hardware. Keep it up!” 🐬👏 Thanks to the developers of the original MMJR and MMJR2 fork, and Lumince for keeping MMJR2 alive for so long.  
 -----------------------------------------------------------------------
+
 # Dolphin MMJR2 Fork
 Mainly, this fork is meant for personal use. This repo's only function at the current time is to update MMJR2 to the latest Dolphin Offical Dev Source code without scoped storage changes merged.
 If you want scoped storage, go use Dolphin Official Builds. I have no use for scoped storage, nor any changes related to it. I wont be merging these changes. Have a nice day!
@@ -14,8 +16,6 @@ An Android-only performance-focused dolphin fork, rebased on top of latest dolph
 Grab the latest build in the [releases](https://github.com/Lumince/Dolphin-MMJR2/releases) section, or check for new version in the in-app updater. Old MMJR v1.0 builds can be found at the old repository [here](https://github.com/Bankaimaster999/Dolphin-MMJR/releases). 1.0 and 2.0 builds can be installed without conflicts as they use different folders, but **savestates are not compatible**. We kindly ask you to avoid misusing GitHub Issues and Pull Requests.
 
 This fork wouldn't be possible without the crazy amount of work that developers much more skilled than us put into Dolphin.
-# New Discord Server
-Join [here](https://discord.gg/NQ9jH8cUeZ)
 
 ## Dolphin - A GameCube and Wii Emulator
 
