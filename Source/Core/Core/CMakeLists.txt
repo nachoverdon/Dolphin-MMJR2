@@ -460,7 +460,7 @@ add_library(core
   PowerPC/CachedInterpreter/InterpreterBlockCache.h
   PowerPC/ConditionRegister.cpp
   PowerPC/ConditionRegister.h
-	PowerPC/Expression.cpp
+  PowerPC/Expression.cpp
   PowerPC/Expression.h
   PowerPC/Interpreter/ExceptionUtils.h
   PowerPC/Interpreter/Interpreter_Branch.cpp
@@ -605,24 +605,23 @@ target_link_libraries(core
 PUBLIC
   audiocommon
   common
-  cubeb
   discio
-  enet
-	expr
+  enet::enet
+  expr
   inputcommon
-  ${MBEDTLS_LIBRARIES}
+  MbedTLS::mbedtls
   pugixml
   RangeSet::RangeSet
   sfml-network
-  sfml-system
   videonull
   videoogl
   videosoftware
 
 PRIVATE
+  cubeb::cubeb
   FatFs
   fmt::fmt
-  ${LZO}
+  LZO::LZO
   ZLIB::ZLIB
 )
 
@@ -646,9 +645,8 @@ elseif (ANDROID)
   )
 endif()
 
-if(LIBUSB_FOUND)
-  # Using shared LibUSB
-  target_link_libraries(core PUBLIC ${LIBUSB_LIBRARIES})
+if(TARGET LibUSB::LibUSB)
+  target_link_libraries(core PUBLIC LibUSB::LibUSB)
   target_sources(core PRIVATE
     IOS/USB/LibusbDevice.cpp
     IOS/USB/LibusbDevice.h
