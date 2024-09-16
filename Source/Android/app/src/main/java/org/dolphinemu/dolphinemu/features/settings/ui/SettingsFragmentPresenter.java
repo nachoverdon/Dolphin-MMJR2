@@ -470,6 +470,8 @@ public final class SettingsFragmentPresenter
             R.string.wii_pal60_description));
     sl.add(new CheckBoxSetting(mContext, BooleanSetting.SYSCONF_SCREENSAVER,
             R.string.wii_screensaver, R.string.wii_screensaver_description));
+    sl.add(new CheckBoxSetting(mContext, BooleanSetting.MAIN_WII_WIILINK_ENABLE,
+            R.string.wii_enable_wiilink, R.string.wii_enable_wiilink_description));
     sl.add(new SingleChoiceSetting(mContext, IntSetting.SYSCONF_SOUND_MODE, R.string.sound_mode, 0,
             R.array.soundModeEntries, R.array.soundModeValues));
     sl.add(new HeaderSetting(mContext, R.string.wii_sd_card_settings, 0));
