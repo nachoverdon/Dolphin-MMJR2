@@ -44,7 +44,7 @@
 	path = Externals/cubeb/cubeb
 	url = https://github.com/mozilla/cubeb.git
 	branch = master
-  shallow = true
+	shallow = true
 [submodule "Externals/implot/implot"]
 	path = Externals/implot/implot
 	url = https://github.com/epezent/implot.git
@@ -55,3 +55,6 @@
 [submodule "Externals/rcheevos/rcheevos"]
 	path = Externals/rcheevos/rcheevos
 	url = https://github.com/RetroAchievements/rcheevos.git
+[submodule "Externals/curl/curl"]
+	path = Externals/curl/curl
+	url = https://github.com/curl/curl.git
